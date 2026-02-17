@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPod Reader</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f7;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* --- iPod Body --- */
+    .ipod-body {
+      width: 232px;
+      height: 396px;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 100%);
+      border-radius: 28px;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.8) inset,
+        0 -1px 0 rgba(0,0,0,0.04) inset,
+        0 12px 48px rgba(0,0,0,0.12),
+        0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0 24px;
+      position: relative;
+      transition: box-shadow 0.3s ease;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .ipod-body.drag-over {
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.8) inset,
+        0 -1px 0 rgba(0,0,0,0.04) inset,
+        0 12px 48px rgba(0,120,255,0.2),
+        0 0 0 3px rgba(0,120,255,0.35);
+    }
+
+    /* --- Screen --- */
+    .ipod-screen {
+      width: 186px;
+      height: 138px;
+      background: linear-gradient(180deg, #a3b8a8 0%, #92a996 100%);
+      border-radius: 5px;
+      box-shadow:
+        inset 0 2px 6px rgba(0,0,0,0.25),
+        0 1px 0 rgba(255,255,255,0.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Subtle LCD scanline overlay */
+    .ipod-screen::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      border-radius: 5px;
+    }
+
+    .screen-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 8px 0;
+      font-size: 10px;
+      font-weight: 600;
+      color: #2c4a30;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .screen-header.visible { opacity: 1; }
+
+    .screen-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      min-height: 0;
+    }
+
+    .screen-word {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a2e1a;
+      text-align: center;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      word-break: break-all;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Long words scale down */
+    .screen-word.long { font-size: 20px; }
+    .screen-word.xlong { font-size: 15px; }
+
+    .screen-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: #3a5c3e;
+      margin-top: 4px;
+      text-align: center;
+      transition: opacity 0.3s ease;
+    }
+
+    .screen-progress {
+      height: 3px;
+      background: rgba(0,0,0,0.1);
+      margin: 0 8px 6px;
+      border-radius: 2px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .screen-progress.visible { opacity: 1; }
+
+    .screen-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #2c4a30;
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+
+    /* --- Click Wheel --- */
+    .click-wheel {
+      width: 168px;
+      height: 168px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #f0f0f0, #d4d4d4);
+      box-shadow:
+        inset 0 1px 4px rgba(0,0,0,0.12),
+        0 1px 2px rgba(255,255,255,0.6);
+      position: relative;
+      margin-top: 20px;
+      cursor: grab;
+    }
+
+    .click-wheel:active { cursor: grabbing; }
+
+    /* Wheel button labels */
+    .wheel-btn {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 2;
+      transition: opacity 0.1s, transform 0.1s;
+    }
+
+    .wheel-btn:active {
+      transform: scale(0.92);
+      opacity: 0.5;
+    }
+
+    .wheel-menu {
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      width: 60px;
+      height: 30px;
+    }
+
+    .wheel-forward {
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      width: 34px;
+      height: 50px;
+    }
+
+    .wheel-playpause {
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      width: 60px;
+      height: 30px;
+    }
+
+    .wheel-back {
+      left: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      width: 34px;
+      height: 50px;
+    }
+
+    .wheel-back:active, .wheel-forward:active {
+      transform: translateY(-50%) scale(0.92);
+      opacity: 0.5;
+    }
+
+    .wheel-menu:active {
+      transform: translateX(-50%) scale(0.92);
+      opacity: 0.5;
+    }
+
+    .wheel-playpause:active {
+      transform: translateX(-50%) scale(0.92);
+      opacity: 0.5;
+    }
+
+    /* Center button */
+    .wheel-center {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: linear-gradient(180deg, #f8f8f8, #e6e6e6);
+      box-shadow:
+        0 1px 3px rgba(0,0,0,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+      cursor: pointer;
+      z-index: 3;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .wheel-center:active {
+      transform: translate(-50%, -50%) scale(0.95);
+      box-shadow: 0 0px 2px rgba(0,0,0,0.12);
+    }
+
+    /* --- Hidden file input --- */
+    #pdfInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ipod-body" id="ipodBody">
+    <!-- Screen -->
+    <div class="ipod-screen">
+      <div class="screen-header" id="screenHeader">
+        <span id="screenWpm">250 WPM</span>
+        <span id="screenCount"></span>
+      </div>
+      <div class="screen-content">
+        <div class="screen-word" id="screenWord">iPod Reader</div>
+        <div class="screen-subtitle" id="screenSubtitle">Drop a PDF to begin</div>
+      </div>
+      <div class="screen-progress" id="screenProgress">
+        <div class="screen-progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Click Wheel -->
+    <div class="click-wheel" id="clickWheel">
+      <div class="wheel-btn wheel-menu" id="btnMenu">MENU</div>
+      <div class="wheel-btn wheel-forward" id="btnForward">&#9654;&#9654;&#124;</div>
+      <div class="wheel-btn wheel-playpause" id="btnPlayPause">&#9654;&#10074;&#10074;</div>
+      <div class="wheel-btn wheel-back" id="btnBack">&#124;&#9664;&#9664;</div>
+      <div class="wheel-center" id="btnCenter"></div>
+    </div>
+  </div>
+
+  <input type="file" id="pdfInput" accept=".pdf">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // --- Config ---
+    const DEFAULT_WPM = 250;
+    const MIN_WPM = 50;
+    const MAX_WPM = 1000;
+    const WPM_STEP = 25;
+
+    // --- State ---
+    let words = [];
+    let currentIndex = 0;
+    let wpm = DEFAULT_WPM;
+    let isPlaying = false;
+    let intervalId = null;
+    let pdfFileName = '';
+    let appState = 'idle'; // idle | ready | playing | paused
+
+    // --- TTS State ---
+    let ttsEnabled = true;
+    let ttsVoice = null;
+    let ttsSpeaking = false;
+    let ttsMode = 'chunk'; // 'chunk' mode: speak phrases, not single words
+
+    // --- DOM ---
+    const ipodBody = document.getElementById('ipodBody');
+    const screenHeader = document.getElementById('screenHeader');
+    const screenWpm = document.getElementById('screenWpm');
+    const screenCount = document.getElementById('screenCount');
+    const screenWord = document.getElementById('screenWord');
+    const screenSubtitle = document.getElementById('screenSubtitle');
+    const screenProgress = document.getElementById('screenProgress');
+    const progressFill = document.getElementById('progressFill');
+    const clickWheel = document.getElementById('clickWheel');
+    const btnMenu = document.getElementById('btnMenu');
+    const btnForward = document.getElementById('btnForward');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const btnBack = document.getElementById('btnBack');
+    const btnCenter = document.getElementById('btnCenter');
+    const pdfInput = document.getElementById('pdfInput');
+
+    // --- PDF.js Setup ---
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // --- TTS Setup ---
+    function setupTTS() {
+      // Voices load async in some browsers
+      function pickVoice() {
+        const voices = speechSynthesis.getVoices();
+        // Prefer a natural English voice
+        ttsVoice = voices.find(v => v.name.includes('Samantha')) ||
+                   voices.find(v => v.name.includes('Karen')) ||
+                   voices.find(v => v.name.includes('Daniel')) ||
+                   voices.find(v => v.lang.startsWith('en') && v.localService) ||
+                   voices.find(v => v.lang.startsWith('en')) ||
+                   voices[0] || null;
+      }
+      pickVoice();
+      speechSynthesis.addEventListener('voiceschanged', pickVoice);
+    }
+
+    function speakChunk(startIdx, count) {
+      if (!ttsEnabled || !ttsVoice) return;
+      speechSynthesis.cancel();
+
+      const end = Math.min(startIdx + count, words.length);
+      const phrase = words.slice(startIdx, end).join(' ');
+      const utter = new SpeechSynthesisUtterance(phrase);
+      utter.voice = ttsVoice;
+      // Map WPM to speech rate: 250 WPM ~= rate 1.0, scale linearly
+      utter.rate = Math.max(0.5, Math.min(4, wpm / 250));
+      utter.pitch = 1;
+      utter.volume = 1;
+      ttsSpeaking = true;
+      utter.onend = () => { ttsSpeaking = false; };
+      utter.onerror = () => { ttsSpeaking = false; };
+      speechSynthesis.speak(utter);
+    }
+
+    function stopTTS() {
+      speechSynthesis.cancel();
+      ttsSpeaking = false;
+    }
+
+    // --- PDF Extraction ---
+    async function extractTextFromPDF(arrayBuffer) {
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        screenSubtitle.textContent = `Loading page ${i} / ${pdf.numPages}`;
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + ' ';
+      }
+
+      return fullText.split(/\s+/).filter(w => w.length > 0);
+    }
+
+    // --- Drag and Drop ---
+    function setupDragAndDrop() {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        document.body.addEventListener(evt, e => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
+
+      ipodBody.addEventListener('dragenter', () => {
+        ipodBody.classList.add('drag-over');
+      });
+
+      ipodBody.addEventListener('dragover', e => {
+        e.preventDefault();
+        ipodBody.classList.add('drag-over');
+      });
+
+      ipodBody.addEventListener('dragleave', e => {
+        if (!ipodBody.contains(e.relatedTarget)) {
+          ipodBody.classList.remove('drag-over');
+        }
+      });
+
+      ipodBody.addEventListener('drop', async e => {
+        e.preventDefault();
+        ipodBody.classList.remove('drag-over');
+
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+
+        await loadPDF(file);
+      });
+
+      // Also allow clicking the iPod to select a file (when idle)
+      ipodBody.addEventListener('click', e => {
+        if (appState === 'idle' && e.target === ipodBody) {
+          pdfInput.click();
+        }
+      });
+
+      pdfInput.addEventListener('change', async () => {
+        const file = pdfInput.files[0];
+        if (file) await loadPDF(file);
+        pdfInput.value = '';
+      });
+    }
+
+    async function loadPDF(file) {
+      if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+        showMessage('Not a PDF', 'Drop a PDF file');
+        return;
+      }
+
+      pdfFileName = file.name.replace(/\.pdf$/i, '');
+      showMessage('Loading...', file.name);
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        words = await extractTextFromPDF(arrayBuffer);
+        currentIndex = 0;
+
+        if (words.length === 0) {
+          showMessage('No text', 'PDF appears empty');
+          return;
+        }
+
+        setAppState('ready');
+      } catch (err) {
+        showMessage('Error', 'Could not read PDF');
+        console.error(err);
+      }
+    }
+
+    // --- RSVP Engine ---
+    function getMsPerWord() {
+      return 60000 / wpm;
+    }
+
+    // How many words per TTS chunk — enough for natural speech
+    const TTS_CHUNK_SIZE = 15;
+    let nextTTSChunkAt = 0;
+
+    function startReading() {
+      if (words.length === 0) return;
+      isPlaying = true;
+      setAppState('playing');
+
+      // Start first TTS chunk
+      nextTTSChunkAt = currentIndex;
+      speakChunk(currentIndex, TTS_CHUNK_SIZE);
+      nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
+
+      tick(); // show first word immediately
+      intervalId = setInterval(tick, getMsPerWord());
+    }
+
+    function tick() {
+      if (currentIndex >= words.length) {
+        stopReading();
+        showMessage('Done', `${words.length.toLocaleString()} words`);
+        return;
+      }
+
+      // Trigger next TTS chunk when we reach the boundary
+      if (ttsEnabled && currentIndex >= nextTTSChunkAt) {
+        speakChunk(currentIndex, TTS_CHUNK_SIZE);
+        nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
+      }
+
+      displayWord(words[currentIndex]);
+      currentIndex++;
+      updateProgress();
+    }
+
+    function displayWord(word) {
+      screenWord.textContent = word;
+      screenWord.classList.remove('long', 'xlong');
+      if (word.length > 14) screenWord.classList.add('xlong');
+      else if (word.length > 9) screenWord.classList.add('long');
+    }
+
+    function stopReading() {
+      isPlaying = false;
+      clearInterval(intervalId);
+      intervalId = null;
+      stopTTS();
+      if (words.length > 0 && currentIndex < words.length) {
+        setAppState('paused');
+      }
+    }
+
+    function togglePlayPause() {
+      if (appState === 'idle') return;
+
+      // If done, restart from beginning
+      if (currentIndex >= words.length && !isPlaying) {
+        currentIndex = 0;
+      }
+
+      if (isPlaying) {
+        stopReading();
+      } else {
+        startReading();
+      }
+    }
+
+    function skipForward() {
+      if (words.length === 0) return;
+      if (currentIndex < words.length) {
+        displayWord(words[currentIndex]);
+        currentIndex = Math.min(currentIndex + 1, words.length);
+        updateProgress();
+      }
+    }
+
+    function skipBack() {
+      if (words.length === 0) return;
+      currentIndex = Math.max(currentIndex - 2, 0);
+      displayWord(words[currentIndex]);
+      currentIndex++;
+      updateProgress();
+    }
+
+    function adjustSpeed(delta) {
+      wpm = Math.max(MIN_WPM, Math.min(MAX_WPM, wpm + delta));
+      screenWpm.textContent = `${wpm} WPM`;
+
+      // Restart interval if currently playing
+      if (isPlaying) {
+        clearInterval(intervalId);
+        intervalId = setInterval(tick, getMsPerWord());
+      }
+    }
+
+    function resetToIdle() {
+      stopReading();
+      stopTTS();
+      words = [];
+      currentIndex = 0;
+      wpm = DEFAULT_WPM;
+      pdfFileName = '';
+      setAppState('idle');
+    }
+
+    // --- Display ---
+    function showMessage(title, subtitle) {
+      screenWord.textContent = title;
+      screenSubtitle.textContent = subtitle || '';
+    }
+
+    function updateProgress() {
+      const pct = words.length > 0 ? ((currentIndex) / words.length) * 100 : 0;
+      progressFill.style.width = `${pct}%`;
+      screenCount.textContent = `${currentIndex.toLocaleString()} / ${words.length.toLocaleString()}`;
+    }
+
+    function setAppState(state) {
+      appState = state;
+
+      switch (state) {
+        case 'idle':
+          screenHeader.classList.remove('visible');
+          screenProgress.classList.remove('visible');
+          screenWord.textContent = 'iPod Reader';
+          screenSubtitle.textContent = 'Drop a PDF to begin';
+          screenSubtitle.style.opacity = '1';
+          screenWpm.textContent = `${wpm} WPM`;
+          progressFill.style.width = '0%';
+          break;
+
+        case 'ready':
+          screenHeader.classList.add('visible');
+          screenProgress.classList.add('visible');
+          screenWord.textContent = truncate(pdfFileName, 16);
+          screenSubtitle.textContent = `${words.length.toLocaleString()} words`;
+          screenSubtitle.style.opacity = '1';
+          updateProgress();
+          break;
+
+        case 'playing':
+          screenHeader.classList.add('visible');
+          screenProgress.classList.add('visible');
+          screenSubtitle.style.opacity = '0';
+          break;
+
+        case 'paused':
+          screenHeader.classList.add('visible');
+          screenProgress.classList.add('visible');
+          screenSubtitle.textContent = 'paused';
+          screenSubtitle.style.opacity = '0.7';
+          break;
+      }
+    }
+
+    function truncate(str, max) {
+      return str.length > max ? str.slice(0, max - 1) + '\u2026' : str;
+    }
+
+    // --- Click Wheel Events ---
+    function setupClickWheel() {
+      btnCenter.addEventListener('click', e => {
+        e.stopPropagation();
+        togglePlayPause();
+      });
+
+      btnPlayPause.addEventListener('click', e => {
+        e.stopPropagation();
+        togglePlayPause();
+      });
+
+      btnForward.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!isPlaying) skipForward();
+      });
+
+      btnBack.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!isPlaying) skipBack();
+      });
+
+      btnMenu.addEventListener('click', e => {
+        e.stopPropagation();
+        resetToIdle();
+      });
+
+      // Hold-to-repeat for forward/back
+      let holdInterval = null;
+
+      function startHold(action) {
+        action();
+        holdInterval = setInterval(action, 120);
+      }
+
+      function stopHold() {
+        if (holdInterval) {
+          clearInterval(holdInterval);
+          holdInterval = null;
+        }
+      }
+
+      btnForward.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        startHold(skipForward);
+      });
+      btnBack.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        startHold(skipBack);
+      });
+      document.addEventListener('mouseup', stopHold);
+
+      // Touch hold-to-repeat
+      btnForward.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        startHold(skipForward);
+      });
+      btnBack.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        startHold(skipBack);
+      });
+      document.addEventListener('touchend', stopHold);
+    }
+
+    // --- Wheel Rotation Gesture ---
+    function setupWheelGesture() {
+      let isDragging = false;
+      let lastAngle = null;
+      let accumulated = 0;
+
+      function getAngle(e) {
+        const rect = clickWheel.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return Math.atan2(clientY - cy, clientX - cx);
+      }
+
+      function isOnRing(e) {
+        const rect = clickWheel.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const clientX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const clientY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        const dist = Math.hypot(clientX - cx, clientY - cy);
+        const outerR = rect.width / 2;
+        const innerR = 35; // center button radius
+        return dist > innerR && dist <= outerR;
+      }
+
+      clickWheel.addEventListener('mousedown', e => {
+        if (e.target === clickWheel && isOnRing(e)) {
+          isDragging = true;
+          lastAngle = getAngle(e);
+          accumulated = 0;
+        }
+      });
+
+      clickWheel.addEventListener('touchstart', e => {
+        if (e.target === clickWheel && isOnRing(e)) {
+          isDragging = true;
+          lastAngle = getAngle(e);
+          accumulated = 0;
+        }
+      });
+
+      document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        handleRotation(e);
+      });
+
+      document.addEventListener('touchmove', e => {
+        if (!isDragging) return;
+        handleRotation(e);
+      });
+
+      function handleRotation(e) {
+        const currentAngle = getAngle(e);
+        if (lastAngle === null) { lastAngle = currentAngle; return; }
+
+        let delta = currentAngle - lastAngle;
+        if (delta > Math.PI) delta -= 2 * Math.PI;
+        if (delta < -Math.PI) delta += 2 * Math.PI;
+
+        accumulated += delta;
+        lastAngle = currentAngle;
+
+        // ~15 degrees per step
+        const threshold = 0.26;
+        if (Math.abs(accumulated) >= threshold) {
+          const steps = Math.floor(Math.abs(accumulated) / threshold);
+          const direction = accumulated > 0 ? 1 : -1;
+          adjustSpeed(direction * WPM_STEP * steps);
+          accumulated = accumulated % threshold;
+        }
+      }
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+        lastAngle = null;
+      });
+
+      document.addEventListener('touchend', () => {
+        isDragging = false;
+        lastAngle = null;
+      });
+    }
+
+    // --- Keyboard ---
+    function setupKeyboard() {
+      document.addEventListener('keydown', e => {
+        switch (e.code) {
+          case 'Space':
+            e.preventDefault();
+            togglePlayPause();
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            skipForward();
+            break;
+          case 'ArrowLeft':
+            e.preventDefault();
+            skipBack();
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            adjustSpeed(WPM_STEP);
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            adjustSpeed(-WPM_STEP);
+            break;
+          case 'Escape':
+            e.preventDefault();
+            resetToIdle();
+            break;
+        }
+      });
+    }
+
+    // --- Init ---
+    setupTTS();
+    setupDragAndDrop();
+    setupClickWheel();
+    setupWheelGesture();
+    setupKeyboard();
+    setAppState('idle');
+  </script>
+</body>
+</html>
