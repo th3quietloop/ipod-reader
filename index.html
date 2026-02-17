@@ -51,7 +51,6 @@
     .ipod-screen {
       width: 186px;
       height: 138px;
-      background: linear-gradient(180deg, #a3b8a8 0%, #92a996 100%);
       border-radius: 5px;
       box-shadow:
         inset 0 2px 6px rgba(0,0,0,0.25),
@@ -60,6 +59,17 @@
       flex-direction: column;
       overflow: hidden;
       position: relative;
+      transition: background 0.4s ease;
+    }
+
+    /* Light theme (default) */
+    .ipod-screen.theme-light {
+      background: linear-gradient(180deg, #a3b8a8 0%, #92a996 100%);
+    }
+
+    /* Dark / backlit theme */
+    .ipod-screen.theme-dark {
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     }
 
     /* Subtle LCD scanline overlay */
@@ -78,21 +88,91 @@
       border-radius: 5px;
     }
 
-    .screen-header {
+    /* --- Screen views (only one visible at a time) --- */
+    .screen-view {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+    .screen-view.active {
       display: flex;
-      justify-content: space-between;
-      padding: 6px 8px 0;
-      font-size: 10px;
-      font-weight: 600;
-      color: #2c4a30;
-      letter-spacing: 0.02em;
-      opacity: 0;
-      transition: opacity 0.3s ease;
     }
 
-    .screen-header.visible { opacity: 1; }
+    /* --- Title bar (shared across views) --- */
+    .title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 8px 3px;
+      font-size: 10px;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
 
-    .screen-content {
+    .theme-light .title-bar { color: #2c4a30; border-color: rgba(0,0,0,0.1); }
+    .theme-dark .title-bar { color: #8ebbff; border-color: rgba(255,255,255,0.1); }
+
+    .title-bar-text { letter-spacing: 0.03em; }
+    .title-bar-right { font-weight: 500; font-size: 9px; opacity: 0.7; }
+
+    /* --- Menu View --- */
+    .menu-list {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .theme-light .menu-item { color: #1a2e1a; }
+    .theme-dark .menu-item { color: #d0d8e8; }
+
+    .menu-item.selected {
+      border-radius: 2px;
+    }
+    .theme-light .menu-item.selected { background: #2c4a30; color: #fff; }
+    .theme-dark .menu-item.selected { background: #4a7dff; color: #fff; }
+
+    .menu-item-arrow {
+      font-size: 10px;
+      opacity: 0.5;
+    }
+    .menu-item.selected .menu-item-arrow { opacity: 0.9; }
+
+    .menu-item-icon {
+      margin-right: 6px;
+      font-size: 11px;
+      width: 16px;
+      text-align: center;
+    }
+
+    .menu-item-label { flex: 1; }
+
+    /* --- Now Playing View --- */
+    .np-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 8px 2px;
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .theme-light .np-header { color: #2c4a30; }
+    .theme-dark .np-header { color: #8ebbff; }
+
+    .np-content {
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -100,12 +180,12 @@
       justify-content: center;
       padding: 0 10px;
       min-height: 0;
+      position: relative;
     }
 
-    .screen-word {
+    .np-word {
       font-size: 26px;
       font-weight: 700;
-      color: #1a2e1a;
       text-align: center;
       line-height: 1.15;
       letter-spacing: -0.01em;
@@ -114,39 +194,137 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .theme-light .np-word { color: #1a2e1a; }
+    .theme-dark .np-word { color: #e8eeff; }
 
-    /* Long words scale down */
-    .screen-word.long { font-size: 20px; }
-    .screen-word.xlong { font-size: 15px; }
+    .np-word.long { font-size: 20px; }
+    .np-word.xlong { font-size: 15px; }
 
-    .screen-subtitle {
+    .np-subtitle {
       font-size: 11px;
       font-weight: 500;
-      color: #3a5c3e;
       margin-top: 4px;
       text-align: center;
       transition: opacity 0.3s ease;
     }
+    .theme-light .np-subtitle { color: #3a5c3e; }
+    .theme-dark .np-subtitle { color: #7a9ac0; }
 
-    .screen-progress {
-      height: 3px;
-      background: rgba(0,0,0,0.1);
-      margin: 0 8px 6px;
-      border-radius: 2px;
-      overflow: hidden;
+    /* EQ Visualizer bars */
+    .eq-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 18px;
+      margin-top: 4px;
       opacity: 0;
       transition: opacity 0.3s ease;
     }
+    .eq-container.active { opacity: 1; }
 
-    .screen-progress.visible { opacity: 1; }
+    .eq-bar {
+      width: 4px;
+      border-radius: 1px;
+      transition: height 0.1s ease;
+    }
+    .theme-light .eq-bar { background: #2c4a30; }
+    .theme-dark .eq-bar { background: #4a7dff; }
 
-    .screen-progress-fill {
+    .np-progress {
+      height: 3px;
+      background: rgba(0,0,0,0.1);
+      margin: 0 8px 5px;
+      border-radius: 2px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .theme-dark .np-progress { background: rgba(255,255,255,0.1); }
+
+    .np-progress-fill {
       height: 100%;
       width: 0%;
-      background: #2c4a30;
       border-radius: 2px;
       transition: width 0.1s linear;
     }
+    .theme-light .np-progress-fill { background: #2c4a30; }
+    .theme-dark .np-progress-fill { background: #4a7dff; }
+
+    /* Chapter indicator */
+    .np-chapter {
+      font-size: 9px;
+      font-weight: 500;
+      padding: 0 8px 2px;
+      text-align: center;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+    .theme-light .np-chapter { color: #2c4a30; }
+    .theme-dark .np-chapter { color: #7a9ac0; }
+
+    /* --- Settings View --- */
+    .settings-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .theme-light .settings-item { color: #1a2e1a; }
+    .theme-dark .settings-item { color: #d0d8e8; }
+
+    .settings-item.selected {
+      border-radius: 2px;
+    }
+    .theme-light .settings-item.selected { background: #2c4a30; color: #fff; }
+    .theme-dark .settings-item.selected { background: #4a7dff; color: #fff; }
+
+    .settings-value {
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    .settings-item.selected .settings-value { opacity: 1; }
+
+    /* --- Library View --- */
+    .library-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      opacity: 0.5;
+    }
+    .theme-light .library-empty { color: #2c4a30; }
+    .theme-dark .library-empty { color: #7a9ac0; }
+
+    /* --- Chapters View --- */
+    .chapter-item {
+      display: flex;
+      align-items: center;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .theme-light .chapter-item { color: #1a2e1a; }
+    .theme-dark .chapter-item { color: #d0d8e8; }
+
+    .chapter-item.selected {
+      border-radius: 2px;
+    }
+    .theme-light .chapter-item.selected { background: #2c4a30; color: #fff; }
+    .theme-dark .chapter-item.selected { background: #4a7dff; color: #fff; }
+
+    .chapter-num {
+      font-size: 9px;
+      opacity: 0.5;
+      margin-right: 6px;
+      width: 16px;
+      text-align: right;
+    }
+    .chapter-item.selected .chapter-num { opacity: 0.8; }
 
     /* --- Click Wheel --- */
     .click-wheel {
@@ -164,7 +342,6 @@
 
     .click-wheel:active { cursor: grabbing; }
 
-    /* Wheel button labels */
     .wheel-btn {
       position: absolute;
       display: flex;
@@ -223,18 +400,15 @@
       transform: translateY(-50%) scale(0.92);
       opacity: 0.5;
     }
-
     .wheel-menu:active {
       transform: translateX(-50%) scale(0.92);
       opacity: 0.5;
     }
-
     .wheel-playpause:active {
       transform: translateX(-50%) scale(0.92);
       opacity: 0.5;
     }
 
-    /* Center button */
     .wheel-center {
       position: absolute;
       width: 60px;
@@ -257,31 +431,68 @@
       box-shadow: 0 0px 2px rgba(0,0,0,0.12);
     }
 
-    /* --- Hidden file input --- */
-    #pdfInput {
-      display: none;
-    }
+    #pdfInput { display: none; }
   </style>
 </head>
 <body>
 
   <div class="ipod-body" id="ipodBody">
-    <!-- Screen -->
-    <div class="ipod-screen">
-      <div class="screen-header" id="screenHeader">
-        <span id="screenWpm">250 WPM</span>
-        <span id="screenCount"></span>
+    <div class="ipod-screen theme-light" id="screen">
+
+      <!-- Main Menu View -->
+      <div class="screen-view active" id="viewMenu">
+        <div class="title-bar">
+          <span class="title-bar-text">iPod Reader</span>
+          <span class="title-bar-right" id="menuBattery">&#9654;</span>
+        </div>
+        <div class="menu-list" id="menuList"></div>
       </div>
-      <div class="screen-content">
-        <div class="screen-word" id="screenWord">iPod Reader</div>
-        <div class="screen-subtitle" id="screenSubtitle">Drop a PDF to begin</div>
+
+      <!-- Now Playing View -->
+      <div class="screen-view" id="viewNowPlaying">
+        <div class="np-header">
+          <span id="npWpm">250 WPM</span>
+          <span id="npCount"></span>
+        </div>
+        <div class="np-chapter" id="npChapter"></div>
+        <div class="np-content">
+          <div class="np-word" id="npWord">iPod Reader</div>
+          <div class="np-subtitle" id="npSubtitle">Drop a PDF to begin</div>
+          <div class="eq-container" id="eqContainer"></div>
+        </div>
+        <div class="np-progress">
+          <div class="np-progress-fill" id="npProgressFill"></div>
+        </div>
       </div>
-      <div class="screen-progress" id="screenProgress">
-        <div class="screen-progress-fill" id="progressFill"></div>
+
+      <!-- Library View -->
+      <div class="screen-view" id="viewLibrary">
+        <div class="title-bar">
+          <span class="title-bar-text">Library</span>
+          <span class="title-bar-right" id="libCount"></span>
+        </div>
+        <div class="menu-list" id="libraryList"></div>
       </div>
+
+      <!-- Chapters View -->
+      <div class="screen-view" id="viewChapters">
+        <div class="title-bar">
+          <span class="title-bar-text">Chapters</span>
+          <span class="title-bar-right" id="chapCount"></span>
+        </div>
+        <div class="menu-list" id="chaptersList"></div>
+      </div>
+
+      <!-- Settings View -->
+      <div class="screen-view" id="viewSettings">
+        <div class="title-bar">
+          <span class="title-bar-text">Settings</span>
+        </div>
+        <div class="menu-list" id="settingsList"></div>
+      </div>
+
     </div>
 
-    <!-- Click Wheel -->
     <div class="click-wheel" id="clickWheel">
       <div class="wheel-btn wheel-menu" id="btnMenu">MENU</div>
       <div class="wheel-btn wheel-forward" id="btnForward">&#9654;&#9654;&#124;</div>
@@ -300,6 +511,9 @@
     const MIN_WPM = 50;
     const MAX_WPM = 1000;
     const WPM_STEP = 25;
+    const TTS_CHUNK_SIZE = 15;
+    const EQ_BAR_COUNT = 12;
+    const STORAGE_KEY = 'ipod-reader';
 
     // --- State ---
     let words = [];
@@ -308,23 +522,33 @@
     let isPlaying = false;
     let intervalId = null;
     let pdfFileName = '';
-    let appState = 'idle'; // idle | ready | playing | paused
+    let chapters = [];       // [{ title, wordIndex }]
+    let bookmarks = {};      // { fileName: wordIndex }
+    let library = [];        // [{ name, wordCount, date }]
 
-    // --- TTS State ---
-    let ttsEnabled = true;
+    // Settings
+    let settings = {
+      theme: 'light',
+      ttsEnabled: true,
+      defaultWpm: 250,
+      voice: null // voice name
+    };
+
+    // TTS
     let ttsVoice = null;
     let ttsSpeaking = false;
-    let ttsMode = 'chunk'; // 'chunk' mode: speak phrases, not single words
+    let nextTTSChunkAt = 0;
+
+    // EQ animation
+    let eqAnimId = null;
+
+    // Navigation stack for MENU button
+    let viewStack = ['menu'];
+    let menuSelections = {}; // track selected index per view
 
     // --- DOM ---
     const ipodBody = document.getElementById('ipodBody');
-    const screenHeader = document.getElementById('screenHeader');
-    const screenWpm = document.getElementById('screenWpm');
-    const screenCount = document.getElementById('screenCount');
-    const screenWord = document.getElementById('screenWord');
-    const screenSubtitle = document.getElementById('screenSubtitle');
-    const screenProgress = document.getElementById('screenProgress');
-    const progressFill = document.getElementById('progressFill');
+    const screenEl = document.getElementById('screen');
     const clickWheel = document.getElementById('clickWheel');
     const btnMenu = document.getElementById('btnMenu');
     const btnForward = document.getElementById('btnForward');
@@ -333,16 +557,54 @@
     const btnCenter = document.getElementById('btnCenter');
     const pdfInput = document.getElementById('pdfInput');
 
+    // Now Playing DOM
+    const npWpm = document.getElementById('npWpm');
+    const npCount = document.getElementById('npCount');
+    const npWord = document.getElementById('npWord');
+    const npSubtitle = document.getElementById('npSubtitle');
+    const npProgressFill = document.getElementById('npProgressFill');
+    const npChapter = document.getElementById('npChapter');
+    const eqContainer = document.getElementById('eqContainer');
+
     // --- PDF.js Setup ---
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    // --- TTS Setup ---
+    // --- Persistence ---
+    function loadSettings() {
+      try {
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (data) {
+          if (data.settings) Object.assign(settings, data.settings);
+          if (data.bookmarks) bookmarks = data.bookmarks;
+          if (data.library) library = data.library;
+        }
+      } catch (e) {}
+      wpm = settings.defaultWpm;
+      applyTheme();
+    }
+
+    function saveSettings() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          settings, bookmarks, library
+        }));
+      } catch (e) {}
+    }
+
+    function applyTheme() {
+      screenEl.classList.remove('theme-light', 'theme-dark');
+      screenEl.classList.add(`theme-${settings.theme}`);
+    }
+
+    // --- TTS ---
     function setupTTS() {
-      // Voices load async in some browsers
       function pickVoice() {
         const voices = speechSynthesis.getVoices();
-        // Prefer a natural English voice
+        if (settings.voice) {
+          const saved = voices.find(v => v.name === settings.voice);
+          if (saved) { ttsVoice = saved; return; }
+        }
         ttsVoice = voices.find(v => v.name.includes('Samantha')) ||
                    voices.find(v => v.name.includes('Karen')) ||
                    voices.find(v => v.name.includes('Daniel')) ||
@@ -355,14 +617,12 @@
     }
 
     function speakChunk(startIdx, count) {
-      if (!ttsEnabled || !ttsVoice) return;
+      if (!settings.ttsEnabled || !ttsVoice) return;
       speechSynthesis.cancel();
-
       const end = Math.min(startIdx + count, words.length);
       const phrase = words.slice(startIdx, end).join(' ');
       const utter = new SpeechSynthesisUtterance(phrase);
       utter.voice = ttsVoice;
-      // Map WPM to speech rate: 250 WPM ~= rate 1.0, scale linearly
       utter.rate = Math.max(0.5, Math.min(4, wpm / 250));
       utter.pitch = 1;
       utter.volume = 1;
@@ -377,13 +637,46 @@
       ttsSpeaking = false;
     }
 
+    // --- EQ Visualizer ---
+    function setupEQ() {
+      eqContainer.innerHTML = '';
+      for (let i = 0; i < EQ_BAR_COUNT; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'eq-bar';
+        bar.style.height = '2px';
+        eqContainer.appendChild(bar);
+      }
+    }
+
+    function startEQ() {
+      eqContainer.classList.add('active');
+      function animate() {
+        const bars = eqContainer.children;
+        for (let i = 0; i < bars.length; i++) {
+          const h = isPlaying ? (Math.random() * 14 + 2) : 2;
+          bars[i].style.height = h + 'px';
+        }
+        eqAnimId = requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    function stopEQ() {
+      if (eqAnimId) cancelAnimationFrame(eqAnimId);
+      eqAnimId = null;
+      const bars = eqContainer.children;
+      for (let i = 0; i < bars.length; i++) bars[i].style.height = '2px';
+      // Keep visible but flat when paused with content loaded
+      if (words.length === 0) eqContainer.classList.remove('active');
+    }
+
     // --- PDF Extraction ---
     async function extractTextFromPDF(arrayBuffer) {
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
 
       for (let i = 1; i <= pdf.numPages; i++) {
-        screenSubtitle.textContent = `Loading page ${i} / ${pdf.numPages}`;
+        npSubtitle.textContent = `Loading page ${i} / ${pdf.numPages}`;
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
         const pageText = content.items.map(item => item.str).join(' ');
@@ -393,146 +686,125 @@
       return fullText.split(/\s+/).filter(w => w.length > 0);
     }
 
-    // --- Drag and Drop ---
-    function setupDragAndDrop() {
-      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
-        document.body.addEventListener(evt, e => {
-          e.preventDefault();
-          e.stopPropagation();
-        });
-      });
+    // --- Chapter Detection ---
+    function detectChapters(wordArray) {
+      const chaps = [{ title: 'Start', wordIndex: 0 }];
+      const text = wordArray.join(' ');
+      // Look for common chapter patterns
+      const patterns = [
+        /\b(Chapter|CHAPTER)\s+(\d+|[IVXLC]+)\b/gi,
+        /\b(Part|PART)\s+(\d+|[IVXLC]+)\b/gi,
+        /\b(Section|SECTION)\s+(\d+)\b/gi,
+      ];
 
-      ipodBody.addEventListener('dragenter', () => {
-        ipodBody.classList.add('drag-over');
-      });
-
-      ipodBody.addEventListener('dragover', e => {
-        e.preventDefault();
-        ipodBody.classList.add('drag-over');
-      });
-
-      ipodBody.addEventListener('dragleave', e => {
-        if (!ipodBody.contains(e.relatedTarget)) {
-          ipodBody.classList.remove('drag-over');
+      let wordPos = 0;
+      for (let i = 0; i < wordArray.length; i++) {
+        // Check if this word starts a chapter pattern
+        const remaining = wordArray.slice(i, i + 4).join(' ');
+        for (const pat of patterns) {
+          pat.lastIndex = 0;
+          const match = pat.exec(remaining);
+          if (match && remaining.indexOf(match[0]) === 0) {
+            chaps.push({
+              title: match[0],
+              wordIndex: i
+            });
+            break;
+          }
         }
-      });
-
-      ipodBody.addEventListener('drop', async e => {
-        e.preventDefault();
-        ipodBody.classList.remove('drag-over');
-
-        const file = e.dataTransfer.files[0];
-        if (!file) return;
-
-        await loadPDF(file);
-      });
-
-      // Also allow clicking the iPod to select a file (when idle)
-      ipodBody.addEventListener('click', e => {
-        if (appState === 'idle' && e.target === ipodBody) {
-          pdfInput.click();
-        }
-      });
-
-      pdfInput.addEventListener('change', async () => {
-        const file = pdfInput.files[0];
-        if (file) await loadPDF(file);
-        pdfInput.value = '';
-      });
-    }
-
-    async function loadPDF(file) {
-      if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
-        showMessage('Not a PDF', 'Drop a PDF file');
-        return;
       }
 
-      pdfFileName = file.name.replace(/\.pdf$/i, '');
-      showMessage('Loading...', file.name);
+      return chaps;
+    }
 
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        words = await extractTextFromPDF(arrayBuffer);
-        currentIndex = 0;
-
-        if (words.length === 0) {
-          showMessage('No text', 'PDF appears empty');
-          return;
-        }
-
-        setAppState('ready');
-      } catch (err) {
-        showMessage('Error', 'Could not read PDF');
-        console.error(err);
+    function getCurrentChapter() {
+      if (chapters.length <= 1) return null;
+      let current = chapters[0];
+      for (let i = 1; i < chapters.length; i++) {
+        if (chapters[i].wordIndex <= currentIndex) {
+          current = chapters[i];
+        } else break;
       }
+      return current;
     }
 
-    // --- RSVP Engine ---
-    function getMsPerWord() {
-      return 60000 / wpm;
+    function getCurrentChapterIndex() {
+      let idx = 0;
+      for (let i = 1; i < chapters.length; i++) {
+        if (chapters[i].wordIndex <= currentIndex) idx = i;
+        else break;
+      }
+      return idx;
     }
 
-    // How many words per TTS chunk — enough for natural speech
-    const TTS_CHUNK_SIZE = 15;
-    let nextTTSChunkAt = 0;
+    // --- Sentence-Aware Pacing ---
+    function getWordDelay(word) {
+      const base = 60000 / wpm;
+      // Longer pause at sentence endings
+      if (/[.!?]$/.test(word)) return base * 2.2;
+      // Medium pause at clause boundaries
+      if (/[,;:]$/.test(word)) return base * 1.5;
+      // Slight pause at paragraph indicators (long dashes, ellipsis)
+      if (/[—–…]$/.test(word)) return base * 1.8;
+      return base;
+    }
 
+    // --- RSVP Engine (sentence-aware) ---
     function startReading() {
       if (words.length === 0) return;
       isPlaying = true;
-      setAppState('playing');
+      navigateTo('nowPlaying');
+      startEQ();
 
-      // Start first TTS chunk
+      // Start TTS chunk
       nextTTSChunkAt = currentIndex;
       speakChunk(currentIndex, TTS_CHUNK_SIZE);
       nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
 
-      tick(); // show first word immediately
-      intervalId = setInterval(tick, getMsPerWord());
+      scheduleNextWord();
     }
 
-    function tick() {
+    function scheduleNextWord() {
+      if (!isPlaying) return;
       if (currentIndex >= words.length) {
         stopReading();
-        showMessage('Done', `${words.length.toLocaleString()} words`);
+        npWord.textContent = 'Done';
+        npSubtitle.textContent = `${words.length.toLocaleString()} words`;
+        npSubtitle.style.opacity = '1';
+        saveBookmark();
         return;
       }
 
-      // Trigger next TTS chunk when we reach the boundary
-      if (ttsEnabled && currentIndex >= nextTTSChunkAt) {
+      // TTS chunk boundary
+      if (settings.ttsEnabled && currentIndex >= nextTTSChunkAt) {
         speakChunk(currentIndex, TTS_CHUNK_SIZE);
         nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
       }
 
       displayWord(words[currentIndex]);
+      const delay = getWordDelay(words[currentIndex]);
       currentIndex++;
-      updateProgress();
-    }
+      updateNowPlaying();
 
-    function displayWord(word) {
-      screenWord.textContent = word;
-      screenWord.classList.remove('long', 'xlong');
-      if (word.length > 14) screenWord.classList.add('xlong');
-      else if (word.length > 9) screenWord.classList.add('long');
+      intervalId = setTimeout(scheduleNextWord, delay);
     }
 
     function stopReading() {
       isPlaying = false;
-      clearInterval(intervalId);
+      clearTimeout(intervalId);
       intervalId = null;
       stopTTS();
-      if (words.length > 0 && currentIndex < words.length) {
-        setAppState('paused');
+      stopEQ();
+      saveBookmark();
+      if (words.length > 0) {
+        npSubtitle.textContent = 'paused';
+        npSubtitle.style.opacity = '0.7';
       }
     }
 
     function togglePlayPause() {
-      if (appState === 'idle') return;
-
-      // If done, restart from beginning
-      if (currentIndex >= words.length && !isPlaying) {
-        currentIndex = 0;
-      }
-
+      if (words.length === 0) return;
+      if (currentIndex >= words.length && !isPlaying) currentIndex = 0;
       if (isPlaying) {
         stopReading();
       } else {
@@ -545,7 +817,7 @@
       if (currentIndex < words.length) {
         displayWord(words[currentIndex]);
         currentIndex = Math.min(currentIndex + 1, words.length);
-        updateProgress();
+        updateNowPlaying();
       }
     }
 
@@ -554,77 +826,143 @@
       currentIndex = Math.max(currentIndex - 2, 0);
       displayWord(words[currentIndex]);
       currentIndex++;
-      updateProgress();
+      updateNowPlaying();
+    }
+
+    function skipToChapter(chapterIndex) {
+      if (chapterIndex < 0 || chapterIndex >= chapters.length) return;
+      const wasPlaying = isPlaying;
+      if (isPlaying) stopReading();
+      currentIndex = chapters[chapterIndex].wordIndex;
+      displayWord(words[currentIndex]);
+      updateNowPlaying();
+      if (wasPlaying) startReading();
     }
 
     function adjustSpeed(delta) {
       wpm = Math.max(MIN_WPM, Math.min(MAX_WPM, wpm + delta));
-      screenWpm.textContent = `${wpm} WPM`;
+      npWpm.textContent = `${wpm} WPM`;
+    }
 
-      // Restart interval if currently playing
-      if (isPlaying) {
-        clearInterval(intervalId);
-        intervalId = setInterval(tick, getMsPerWord());
+    function displayWord(word) {
+      npWord.textContent = word;
+      npWord.classList.remove('long', 'xlong');
+      if (word.length > 14) npWord.classList.add('xlong');
+      else if (word.length > 9) npWord.classList.add('long');
+    }
+
+    function updateNowPlaying() {
+      const pct = words.length > 0 ? (currentIndex / words.length) * 100 : 0;
+      npProgressFill.style.width = `${pct}%`;
+      npCount.textContent = `${currentIndex.toLocaleString()} / ${words.length.toLocaleString()}`;
+      npWpm.textContent = `${wpm} WPM`;
+
+      const chap = getCurrentChapter();
+      npChapter.textContent = chap && chapters.length > 1 ? chap.title : '';
+    }
+
+    // --- Bookmarks ---
+    function saveBookmark() {
+      if (pdfFileName && words.length > 0 && currentIndex > 0) {
+        bookmarks[pdfFileName] = currentIndex;
+        saveSettings();
       }
     }
 
-    function resetToIdle() {
-      stopReading();
-      stopTTS();
-      words = [];
-      currentIndex = 0;
-      wpm = DEFAULT_WPM;
-      pdfFileName = '';
-      setAppState('idle');
+    function loadBookmark() {
+      if (pdfFileName && bookmarks[pdfFileName]) {
+        currentIndex = Math.min(bookmarks[pdfFileName], words.length);
+      }
     }
 
-    // --- Display ---
-    function showMessage(title, subtitle) {
-      screenWord.textContent = title;
-      screenSubtitle.textContent = subtitle || '';
+    // --- Library ---
+    function addToLibrary(name, wordCount) {
+      // Update or add
+      const existing = library.find(l => l.name === name);
+      if (existing) {
+        existing.wordCount = wordCount;
+        existing.date = Date.now();
+      } else {
+        library.push({ name, wordCount, date: Date.now() });
+      }
+      // Keep most recent 20
+      library.sort((a, b) => b.date - a.date);
+      if (library.length > 20) library.length = 20;
+      saveSettings();
     }
 
-    function updateProgress() {
-      const pct = words.length > 0 ? ((currentIndex) / words.length) * 100 : 0;
-      progressFill.style.width = `${pct}%`;
-      screenCount.textContent = `${currentIndex.toLocaleString()} / ${words.length.toLocaleString()}`;
+    // --- PDF Loading ---
+    function setupDragAndDrop() {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        document.body.addEventListener(evt, e => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
+
+      ipodBody.addEventListener('dragenter', () => ipodBody.classList.add('drag-over'));
+      ipodBody.addEventListener('dragover', e => {
+        e.preventDefault();
+        ipodBody.classList.add('drag-over');
+      });
+      ipodBody.addEventListener('dragleave', e => {
+        if (!ipodBody.contains(e.relatedTarget)) ipodBody.classList.remove('drag-over');
+      });
+
+      ipodBody.addEventListener('drop', async e => {
+        e.preventDefault();
+        ipodBody.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) await loadPDF(file);
+      });
+
+      pdfInput.addEventListener('change', async () => {
+        const file = pdfInput.files[0];
+        if (file) await loadPDF(file);
+        pdfInput.value = '';
+      });
     }
 
-    function setAppState(state) {
-      appState = state;
+    async function loadPDF(file) {
+      if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+        npWord.textContent = 'Not a PDF';
+        npSubtitle.textContent = 'Drop a PDF file';
+        navigateTo('nowPlaying');
+        return;
+      }
 
-      switch (state) {
-        case 'idle':
-          screenHeader.classList.remove('visible');
-          screenProgress.classList.remove('visible');
-          screenWord.textContent = 'iPod Reader';
-          screenSubtitle.textContent = 'Drop a PDF to begin';
-          screenSubtitle.style.opacity = '1';
-          screenWpm.textContent = `${wpm} WPM`;
-          progressFill.style.width = '0%';
-          break;
+      if (isPlaying) stopReading();
 
-        case 'ready':
-          screenHeader.classList.add('visible');
-          screenProgress.classList.add('visible');
-          screenWord.textContent = truncate(pdfFileName, 16);
-          screenSubtitle.textContent = `${words.length.toLocaleString()} words`;
-          screenSubtitle.style.opacity = '1';
-          updateProgress();
-          break;
+      pdfFileName = file.name.replace(/\.pdf$/i, '');
+      navigateTo('nowPlaying');
+      npWord.textContent = 'Loading...';
+      npSubtitle.textContent = file.name;
+      npSubtitle.style.opacity = '1';
 
-        case 'playing':
-          screenHeader.classList.add('visible');
-          screenProgress.classList.add('visible');
-          screenSubtitle.style.opacity = '0';
-          break;
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        words = await extractTextFromPDF(arrayBuffer);
+        currentIndex = 0;
 
-        case 'paused':
-          screenHeader.classList.add('visible');
-          screenProgress.classList.add('visible');
-          screenSubtitle.textContent = 'paused';
-          screenSubtitle.style.opacity = '0.7';
-          break;
+        if (words.length === 0) {
+          npWord.textContent = 'No text';
+          npSubtitle.textContent = 'PDF appears empty';
+          return;
+        }
+
+        chapters = detectChapters(words);
+        addToLibrary(pdfFileName, words.length);
+        loadBookmark();
+
+        npWord.textContent = truncate(pdfFileName, 16);
+        npSubtitle.textContent = `${words.length.toLocaleString()} words`;
+        npSubtitle.style.opacity = '1';
+        eqContainer.classList.add('active');
+        updateNowPlaying();
+      } catch (err) {
+        npWord.textContent = 'Error';
+        npSubtitle.textContent = 'Could not read PDF';
+        console.error(err);
       }
     }
 
@@ -632,68 +970,332 @@
       return str.length > max ? str.slice(0, max - 1) + '\u2026' : str;
     }
 
-    // --- Click Wheel Events ---
+    // =========================================================
+    //  VIEW / NAVIGATION SYSTEM
+    // =========================================================
+    function navigateTo(viewName) {
+      // Hide all views
+      document.querySelectorAll('.screen-view').forEach(v => v.classList.remove('active'));
+      // Show target
+      const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1));
+      if (target) target.classList.add('active');
+
+      // Push to stack (avoid duplicates at top)
+      if (viewStack[viewStack.length - 1] !== viewName) {
+        viewStack.push(viewName);
+      }
+
+      // Rebuild view content
+      if (viewName === 'menu') buildMainMenu();
+      if (viewName === 'library') buildLibraryView();
+      if (viewName === 'chapters') buildChaptersView();
+      if (viewName === 'settings') buildSettingsView();
+    }
+
+    function goBack() {
+      if (viewStack.length > 1) {
+        viewStack.pop();
+        const prev = viewStack[viewStack.length - 1];
+        // Navigate without pushing again
+        document.querySelectorAll('.screen-view').forEach(v => v.classList.remove('active'));
+        const target = document.getElementById('view' + prev.charAt(0).toUpperCase() + prev.slice(1));
+        if (target) target.classList.add('active');
+        if (prev === 'menu') buildMainMenu();
+        if (prev === 'library') buildLibraryView();
+        if (prev === 'chapters') buildChaptersView();
+        if (prev === 'settings') buildSettingsView();
+      }
+    }
+
+    function currentView() {
+      return viewStack[viewStack.length - 1];
+    }
+
+    // --- Main Menu ---
+    function buildMainMenu() {
+      const list = document.getElementById('menuList');
+      const items = [
+        { icon: '&#9654;', label: 'Now Playing', action: 'nowPlaying', hasArrow: true },
+        { icon: '&#9776;', label: 'Library', action: 'library', hasArrow: true },
+        { icon: '&#167;', label: 'Chapters', action: 'chapters', hasArrow: true },
+        { icon: '&#9881;', label: 'Settings', action: 'settings', hasArrow: true },
+        { icon: '&#43;', label: 'Add PDF...', action: 'addPdf', hasArrow: false },
+      ];
+
+      list.innerHTML = '';
+      const sel = menuSelections['menu'] || 0;
+
+      items.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'menu-item' + (i === sel ? ' selected' : '');
+        el.innerHTML = `<span class="menu-item-icon">${item.icon}</span><span class="menu-item-label">${item.label}</span>${item.hasArrow ? '<span class="menu-item-arrow">&#9654;</span>' : ''}`;
+        el.dataset.action = item.action;
+        el.dataset.index = i;
+        list.appendChild(el);
+      });
+    }
+
+    // --- Library View ---
+    function buildLibraryView() {
+      const list = document.getElementById('libraryList');
+      const countEl = document.getElementById('libCount');
+      list.innerHTML = '';
+
+      if (library.length === 0) {
+        list.innerHTML = '<div class="library-empty">No PDFs yet</div>';
+        countEl.textContent = '';
+        return;
+      }
+
+      countEl.textContent = `${library.length} items`;
+      const sel = menuSelections['library'] || 0;
+
+      library.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'menu-item' + (i === sel ? ' selected' : '');
+        const bm = bookmarks[item.name];
+        const progress = bm ? Math.round((bm / item.wordCount) * 100) + '%' : '';
+        el.innerHTML = `<span class="menu-item-label">${truncate(item.name, 18)}</span><span class="menu-item-arrow" style="font-size:9px;opacity:0.5">${progress}</span>`;
+        el.dataset.index = i;
+        list.appendChild(el);
+      });
+    }
+
+    // --- Chapters View ---
+    function buildChaptersView() {
+      const list = document.getElementById('chaptersList');
+      const countEl = document.getElementById('chapCount');
+      list.innerHTML = '';
+
+      if (chapters.length <= 1) {
+        list.innerHTML = '<div class="library-empty">No chapters found</div>';
+        countEl.textContent = '';
+        return;
+      }
+
+      countEl.textContent = `${chapters.length} chapters`;
+      const sel = menuSelections['chapters'] || 0;
+      const curChapIdx = getCurrentChapterIndex();
+
+      chapters.forEach((chap, i) => {
+        const el = document.createElement('div');
+        el.className = 'chapter-item' + (i === sel ? ' selected' : '');
+        const playing = (i === curChapIdx && words.length > 0) ? ' &#9654;' : '';
+        el.innerHTML = `<span class="chapter-num">${i + 1}</span><span class="menu-item-label">${truncate(chap.title, 20)}${playing}</span>`;
+        el.dataset.index = i;
+        list.appendChild(el);
+      });
+    }
+
+    // --- Settings View ---
+    function buildSettingsView() {
+      const list = document.getElementById('settingsList');
+      list.innerHTML = '';
+
+      const items = [
+        { label: 'Theme', value: settings.theme === 'light' ? 'Classic' : 'Backlit', key: 'theme' },
+        { label: 'Voice', value: settings.ttsEnabled ? 'On' : 'Off', key: 'tts' },
+        { label: 'Default WPM', value: `${settings.defaultWpm}`, key: 'defaultWpm' },
+        { label: 'Clear Library', value: '', key: 'clearLibrary' },
+      ];
+
+      const sel = menuSelections['settings'] || 0;
+
+      items.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'settings-item' + (i === sel ? ' selected' : '');
+        el.innerHTML = `<span>${item.label}</span><span class="settings-value">${item.value}</span>`;
+        el.dataset.key = item.key;
+        el.dataset.index = i;
+        list.appendChild(el);
+      });
+    }
+
+    // --- Get selectable item count for current view ---
+    function getItemCount(view) {
+      switch (view) {
+        case 'menu': return document.querySelectorAll('#menuList .menu-item').length;
+        case 'library': return document.querySelectorAll('#libraryList .menu-item').length;
+        case 'chapters': return document.querySelectorAll('#chaptersList .chapter-item').length;
+        case 'settings': return document.querySelectorAll('#settingsList .settings-item').length;
+        default: return 0;
+      }
+    }
+
+    function scrollSelection(delta) {
+      const view = currentView();
+      if (view === 'nowPlaying') {
+        // In now playing, wheel adjusts speed
+        adjustSpeed(delta > 0 ? WPM_STEP : -WPM_STEP);
+        return;
+      }
+
+      const count = getItemCount(view);
+      if (count === 0) return;
+
+      let sel = menuSelections[view] || 0;
+      sel += delta;
+      if (sel < 0) sel = 0;
+      if (sel >= count) sel = count - 1;
+      menuSelections[view] = sel;
+
+      // Rebuild view to update highlight
+      if (view === 'menu') buildMainMenu();
+      if (view === 'library') buildLibraryView();
+      if (view === 'chapters') buildChaptersView();
+      if (view === 'settings') buildSettingsView();
+    }
+
+    // --- Select action (center button) ---
+    function selectAction() {
+      const view = currentView();
+
+      if (view === 'nowPlaying') {
+        togglePlayPause();
+        return;
+      }
+
+      if (view === 'menu') {
+        const sel = menuSelections['menu'] || 0;
+        const items = document.querySelectorAll('#menuList .menu-item');
+        if (!items[sel]) return;
+        const action = items[sel].dataset.action;
+        if (action === 'addPdf') {
+          pdfInput.click();
+        } else {
+          navigateTo(action);
+        }
+        return;
+      }
+
+      if (view === 'library') {
+        const sel = menuSelections['library'] || 0;
+        if (sel < library.length) {
+          // Can't reload from storage — just show info & navigate to now playing
+          // If it's the currently loaded file, go to now playing
+          const item = library[sel];
+          if (item.name === pdfFileName && words.length > 0) {
+            navigateTo('nowPlaying');
+          }
+          // Otherwise just go to now playing (they'll need to re-drop)
+          navigateTo('nowPlaying');
+        }
+        return;
+      }
+
+      if (view === 'chapters') {
+        const sel = menuSelections['chapters'] || 0;
+        if (sel < chapters.length) {
+          skipToChapter(sel);
+          navigateTo('nowPlaying');
+        }
+        return;
+      }
+
+      if (view === 'settings') {
+        const sel = menuSelections['settings'] || 0;
+        const items = document.querySelectorAll('#settingsList .settings-item');
+        if (!items[sel]) return;
+        const key = items[sel].dataset.key;
+
+        if (key === 'theme') {
+          settings.theme = settings.theme === 'light' ? 'dark' : 'light';
+          applyTheme();
+          saveSettings();
+          buildSettingsView();
+        } else if (key === 'tts') {
+          settings.ttsEnabled = !settings.ttsEnabled;
+          if (!settings.ttsEnabled) stopTTS();
+          saveSettings();
+          buildSettingsView();
+        } else if (key === 'defaultWpm') {
+          settings.defaultWpm += 50;
+          if (settings.defaultWpm > MAX_WPM) settings.defaultWpm = MIN_WPM;
+          wpm = settings.defaultWpm;
+          saveSettings();
+          buildSettingsView();
+        } else if (key === 'clearLibrary') {
+          library = [];
+          bookmarks = {};
+          saveSettings();
+          buildLibraryView();
+          buildSettingsView();
+        }
+        return;
+      }
+    }
+
+    // =========================================================
+    //  CLICK WHEEL CONTROLS
+    // =========================================================
     function setupClickWheel() {
       btnCenter.addEventListener('click', e => {
         e.stopPropagation();
-        togglePlayPause();
+        selectAction();
       });
 
       btnPlayPause.addEventListener('click', e => {
         e.stopPropagation();
-        togglePlayPause();
-      });
-
-      btnForward.addEventListener('click', e => {
-        e.stopPropagation();
-        if (!isPlaying) skipForward();
-      });
-
-      btnBack.addEventListener('click', e => {
-        e.stopPropagation();
-        if (!isPlaying) skipBack();
+        if (currentView() === 'nowPlaying') {
+          togglePlayPause();
+        } else {
+          // Navigate to now playing and toggle
+          navigateTo('nowPlaying');
+          if (words.length > 0) togglePlayPause();
+        }
       });
 
       btnMenu.addEventListener('click', e => {
         e.stopPropagation();
-        resetToIdle();
+        goBack();
       });
 
-      // Hold-to-repeat for forward/back
-      let holdInterval = null;
+      // Forward/back context-dependent
+      btnForward.addEventListener('click', e => {
+        e.stopPropagation();
+        if (currentView() === 'nowPlaying') {
+          skipForward();
+        } else {
+          scrollSelection(1);
+        }
+      });
 
+      btnBack.addEventListener('click', e => {
+        e.stopPropagation();
+        if (currentView() === 'nowPlaying') {
+          skipBack();
+        } else {
+          scrollSelection(-1);
+        }
+      });
+
+      // Hold-to-repeat
+      let holdInterval = null;
       function startHold(action) {
         action();
         holdInterval = setInterval(action, 120);
       }
-
       function stopHold() {
-        if (holdInterval) {
-          clearInterval(holdInterval);
-          holdInterval = null;
-        }
+        if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
       }
 
       btnForward.addEventListener('mousedown', e => {
         e.stopPropagation();
-        startHold(skipForward);
+        if (currentView() === 'nowPlaying') startHold(skipForward);
       });
       btnBack.addEventListener('mousedown', e => {
         e.stopPropagation();
-        startHold(skipBack);
+        if (currentView() === 'nowPlaying') startHold(skipBack);
       });
       document.addEventListener('mouseup', stopHold);
 
-      // Touch hold-to-repeat
       btnForward.addEventListener('touchstart', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        startHold(skipForward);
+        e.preventDefault(); e.stopPropagation();
+        if (currentView() === 'nowPlaying') startHold(skipForward);
       });
       btnBack.addEventListener('touchstart', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        startHold(skipBack);
+        e.preventDefault(); e.stopPropagation();
+        if (currentView() === 'nowPlaying') startHold(skipBack);
       });
       document.addEventListener('touchend', stopHold);
     }
@@ -720,9 +1322,7 @@
         const clientX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
         const clientY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
         const dist = Math.hypot(clientX - cx, clientY - cy);
-        const outerR = rect.width / 2;
-        const innerR = 35; // center button radius
-        return dist > innerR && dist <= outerR;
+        return dist > 35 && dist <= rect.width / 2;
       }
 
       clickWheel.addEventListener('mousedown', e => {
@@ -732,7 +1332,6 @@
           accumulated = 0;
         }
       });
-
       clickWheel.addEventListener('touchstart', e => {
         if (e.target === clickWheel && isOnRing(e)) {
           isDragging = true;
@@ -741,46 +1340,34 @@
         }
       });
 
-      document.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        handleRotation(e);
-      });
-
-      document.addEventListener('touchmove', e => {
-        if (!isDragging) return;
-        handleRotation(e);
-      });
+      document.addEventListener('mousemove', e => { if (isDragging) handleRotation(e); });
+      document.addEventListener('touchmove', e => { if (isDragging) handleRotation(e); });
 
       function handleRotation(e) {
         const currentAngle = getAngle(e);
         if (lastAngle === null) { lastAngle = currentAngle; return; }
-
         let delta = currentAngle - lastAngle;
         if (delta > Math.PI) delta -= 2 * Math.PI;
         if (delta < -Math.PI) delta += 2 * Math.PI;
-
         accumulated += delta;
         lastAngle = currentAngle;
 
-        // ~15 degrees per step
         const threshold = 0.26;
         if (Math.abs(accumulated) >= threshold) {
           const steps = Math.floor(Math.abs(accumulated) / threshold);
-          const direction = accumulated > 0 ? 1 : -1;
-          adjustSpeed(direction * WPM_STEP * steps);
+          const dir = accumulated > 0 ? 1 : -1;
+
+          if (currentView() === 'nowPlaying') {
+            adjustSpeed(dir * WPM_STEP * steps);
+          } else {
+            for (let i = 0; i < steps; i++) scrollSelection(dir);
+          }
           accumulated = accumulated % threshold;
         }
       }
 
-      document.addEventListener('mouseup', () => {
-        isDragging = false;
-        lastAngle = null;
-      });
-
-      document.addEventListener('touchend', () => {
-        isDragging = false;
-        lastAngle = null;
-      });
+      document.addEventListener('mouseup', () => { isDragging = false; lastAngle = null; });
+      document.addEventListener('touchend', () => { isDragging = false; lastAngle = null; });
     }
 
     // --- Keyboard ---
@@ -789,39 +1376,51 @@
         switch (e.code) {
           case 'Space':
             e.preventDefault();
-            togglePlayPause();
+            if (currentView() === 'nowPlaying') togglePlayPause();
+            else selectAction();
             break;
           case 'ArrowRight':
             e.preventDefault();
-            skipForward();
+            if (currentView() === 'nowPlaying') skipForward();
+            else scrollSelection(1);
             break;
           case 'ArrowLeft':
             e.preventDefault();
-            skipBack();
+            if (currentView() === 'nowPlaying') skipBack();
+            else scrollSelection(-1);
             break;
           case 'ArrowUp':
             e.preventDefault();
-            adjustSpeed(WPM_STEP);
+            if (currentView() === 'nowPlaying') adjustSpeed(WPM_STEP);
+            else scrollSelection(-1);
             break;
           case 'ArrowDown':
             e.preventDefault();
-            adjustSpeed(-WPM_STEP);
+            if (currentView() === 'nowPlaying') adjustSpeed(-WPM_STEP);
+            else scrollSelection(1);
+            break;
+          case 'Enter':
+            e.preventDefault();
+            selectAction();
             break;
           case 'Escape':
+          case 'Backspace':
             e.preventDefault();
-            resetToIdle();
+            goBack();
             break;
         }
       });
     }
 
     // --- Init ---
+    loadSettings();
     setupTTS();
+    setupEQ();
     setupDragAndDrop();
     setupClickWheel();
     setupWheelGesture();
     setupKeyboard();
-    setAppState('idle');
+    navigateTo('menu');
   </script>
 </body>
 </html>
