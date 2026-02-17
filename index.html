@@ -55,51 +55,89 @@
       box-shadow:
         inset 0 2px 6px rgba(0,0,0,0.25),
         0 1px 0 rgba(255,255,255,0.5);
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
       position: relative;
       transition: background 0.4s ease;
     }
 
-    /* Light theme (default) */
     .ipod-screen.theme-light {
       background: linear-gradient(180deg, #a3b8a8 0%, #92a996 100%);
     }
-
-    /* Dark / backlit theme */
     .ipod-screen.theme-dark {
       background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     }
 
-    /* Subtle LCD scanline overlay */
+    /* LCD scanline overlay */
     .ipod-screen::after {
       content: '';
       position: absolute;
       inset: 0;
       background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.03) 2px,
-        rgba(0,0,0,0.03) 4px
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
       );
       pointer-events: none;
       border-radius: 5px;
+      z-index: 5;
     }
 
-    /* --- Screen views (only one visible at a time) --- */
-    .screen-view {
-      display: none;
-      flex-direction: column;
+    /* --- Screen viewport for slide transitions --- */
+    .screen-viewport {
       width: 100%;
       height: 100%;
-    }
-    .screen-view.active {
-      display: flex;
+      position: relative;
+      overflow: hidden;
     }
 
-    /* --- Title bar (shared across views) --- */
+    /* --- Screen views --- */
+    .screen-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.3s ease;
+      will-change: transform;
+    }
+
+    .screen-view.pos-center { transform: translateX(0); opacity: 1; }
+    .screen-view.pos-left { transform: translateX(-100%); opacity: 0; pointer-events: none; }
+    .screen-view.pos-right { transform: translateX(100%); opacity: 0; pointer-events: none; }
+    .screen-view.pos-hidden { transform: translateX(100%); opacity: 0; pointer-events: none; }
+
+    /* No transition for instant positioning */
+    .screen-view.no-transition { transition: none !important; }
+
+    /* --- Boot screen --- */
+    .boot-screen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.6s ease;
+    }
+    .theme-light .boot-screen { background: linear-gradient(180deg, #a3b8a8 0%, #92a996 100%); }
+    .theme-dark .boot-screen { background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); }
+
+    .boot-logo {
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .boot-logo.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .boot-logo svg { width: 48px; height: 48px; }
+    .theme-light .boot-logo svg { fill: #2c4a30; }
+    .theme-dark .boot-logo svg { fill: #8ebbff; }
+
+    /* --- Title bar --- */
     .title-bar {
       display: flex;
       justify-content: space-between;
@@ -110,14 +148,12 @@
       border-bottom: 1px solid rgba(0,0,0,0.1);
       flex-shrink: 0;
     }
-
     .theme-light .title-bar { color: #2c4a30; border-color: rgba(0,0,0,0.1); }
     .theme-dark .title-bar { color: #8ebbff; border-color: rgba(255,255,255,0.1); }
-
     .title-bar-text { letter-spacing: 0.03em; }
     .title-bar-right { font-weight: 500; font-size: 9px; opacity: 0.7; }
 
-    /* --- Menu View --- */
+    /* --- Menu --- */
     .menu-list {
       flex: 1;
       overflow: hidden;
@@ -135,32 +171,17 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-
     .theme-light .menu-item { color: #1a2e1a; }
     .theme-dark .menu-item { color: #d0d8e8; }
-
-    .menu-item.selected {
-      border-radius: 2px;
-    }
+    .menu-item.selected { border-radius: 2px; }
     .theme-light .menu-item.selected { background: #2c4a30; color: #fff; }
     .theme-dark .menu-item.selected { background: #4a7dff; color: #fff; }
-
-    .menu-item-arrow {
-      font-size: 10px;
-      opacity: 0.5;
-    }
+    .menu-item-arrow { font-size: 10px; opacity: 0.5; }
     .menu-item.selected .menu-item-arrow { opacity: 0.9; }
-
-    .menu-item-icon {
-      margin-right: 6px;
-      font-size: 11px;
-      width: 16px;
-      text-align: center;
-    }
-
+    .menu-item-icon { margin-right: 6px; font-size: 11px; width: 16px; text-align: center; }
     .menu-item-label { flex: 1; }
 
-    /* --- Now Playing View --- */
+    /* --- Now Playing --- */
     .np-header {
       display: flex;
       justify-content: space-between;
@@ -196,7 +217,6 @@
     }
     .theme-light .np-word { color: #1a2e1a; }
     .theme-dark .np-word { color: #e8eeff; }
-
     .np-word.long { font-size: 20px; }
     .np-word.xlong { font-size: 15px; }
 
@@ -210,7 +230,6 @@
     .theme-light .np-subtitle { color: #3a5c3e; }
     .theme-dark .np-subtitle { color: #7a9ac0; }
 
-    /* EQ Visualizer bars */
     .eq-container {
       display: flex;
       align-items: flex-end;
@@ -249,7 +268,6 @@
     .theme-light .np-progress-fill { background: #2c4a30; }
     .theme-dark .np-progress-fill { background: #4a7dff; }
 
-    /* Chapter indicator */
     .np-chapter {
       font-size: 9px;
       font-weight: 500;
@@ -261,7 +279,7 @@
     .theme-light .np-chapter { color: #2c4a30; }
     .theme-dark .np-chapter { color: #7a9ac0; }
 
-    /* --- Settings View --- */
+    /* --- Settings --- */
     .settings-item {
       display: flex;
       align-items: center;
@@ -273,20 +291,13 @@
     }
     .theme-light .settings-item { color: #1a2e1a; }
     .theme-dark .settings-item { color: #d0d8e8; }
-
-    .settings-item.selected {
-      border-radius: 2px;
-    }
+    .settings-item.selected { border-radius: 2px; }
     .theme-light .settings-item.selected { background: #2c4a30; color: #fff; }
     .theme-dark .settings-item.selected { background: #4a7dff; color: #fff; }
-
-    .settings-value {
-      font-size: 10px;
-      opacity: 0.7;
-    }
+    .settings-value { font-size: 10px; opacity: 0.7; }
     .settings-item.selected .settings-value { opacity: 1; }
 
-    /* --- Library View --- */
+    /* --- Library / Chapters --- */
     .library-empty {
       flex: 1;
       display: flex;
@@ -298,7 +309,6 @@
     .theme-light .library-empty { color: #2c4a30; }
     .theme-dark .library-empty { color: #7a9ac0; }
 
-    /* --- Chapters View --- */
     .chapter-item {
       display: flex;
       align-items: center;
@@ -310,20 +320,10 @@
     }
     .theme-light .chapter-item { color: #1a2e1a; }
     .theme-dark .chapter-item { color: #d0d8e8; }
-
-    .chapter-item.selected {
-      border-radius: 2px;
-    }
+    .chapter-item.selected { border-radius: 2px; }
     .theme-light .chapter-item.selected { background: #2c4a30; color: #fff; }
     .theme-dark .chapter-item.selected { background: #4a7dff; color: #fff; }
-
-    .chapter-num {
-      font-size: 9px;
-      opacity: 0.5;
-      margin-right: 6px;
-      width: 16px;
-      text-align: right;
-    }
+    .chapter-num { font-size: 9px; opacity: 0.5; margin-right: 6px; width: 16px; text-align: right; }
     .chapter-item.selected .chapter-num { opacity: 0.8; }
 
     /* --- Click Wheel --- */
@@ -339,7 +339,6 @@
       margin-top: 20px;
       cursor: grab;
     }
-
     .click-wheel:active { cursor: grabbing; }
 
     .wheel-btn {
@@ -353,83 +352,30 @@
       z-index: 2;
       transition: opacity 0.1s, transform 0.1s;
     }
+    .wheel-btn:active { transform: scale(0.92); opacity: 0.5; }
 
-    .wheel-btn:active {
-      transform: scale(0.92);
-      opacity: 0.5;
-    }
+    .wheel-menu { top: 8px; left: 50%; transform: translateX(-50%); font-size: 11px; letter-spacing: 0.06em; width: 60px; height: 30px; }
+    .wheel-forward { right: 6px; top: 50%; transform: translateY(-50%); font-size: 14px; width: 34px; height: 50px; }
+    .wheel-playpause { bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 14px; width: 60px; height: 30px; }
+    .wheel-back { left: 6px; top: 50%; transform: translateY(-50%); font-size: 14px; width: 34px; height: 50px; }
 
-    .wheel-menu {
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      width: 60px;
-      height: 30px;
-    }
-
-    .wheel-forward {
-      right: 6px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 14px;
-      width: 34px;
-      height: 50px;
-    }
-
-    .wheel-playpause {
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 14px;
-      width: 60px;
-      height: 30px;
-    }
-
-    .wheel-back {
-      left: 6px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 14px;
-      width: 34px;
-      height: 50px;
-    }
-
-    .wheel-back:active, .wheel-forward:active {
-      transform: translateY(-50%) scale(0.92);
-      opacity: 0.5;
-    }
-    .wheel-menu:active {
-      transform: translateX(-50%) scale(0.92);
-      opacity: 0.5;
-    }
-    .wheel-playpause:active {
-      transform: translateX(-50%) scale(0.92);
-      opacity: 0.5;
-    }
+    .wheel-back:active, .wheel-forward:active { transform: translateY(-50%) scale(0.92); opacity: 0.5; }
+    .wheel-menu:active { transform: translateX(-50%) scale(0.92); opacity: 0.5; }
+    .wheel-playpause:active { transform: translateX(-50%) scale(0.92); opacity: 0.5; }
 
     .wheel-center {
       position: absolute;
-      width: 60px;
-      height: 60px;
-      top: 50%;
-      left: 50%;
+      width: 60px; height: 60px;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       border-radius: 50%;
       background: linear-gradient(180deg, #f8f8f8, #e6e6e6);
-      box-shadow:
-        0 1px 3px rgba(0,0,0,0.15),
-        inset 0 1px 0 rgba(255,255,255,0.8);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
       cursor: pointer;
       z-index: 3;
       transition: transform 0.1s, box-shadow 0.1s;
     }
-
-    .wheel-center:active {
-      transform: translate(-50%, -50%) scale(0.95);
-      box-shadow: 0 0px 2px rgba(0,0,0,0.12);
-    }
+    .wheel-center:active { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0px 2px rgba(0,0,0,0.12); }
 
     #pdfInput { display: none; }
   </style>
@@ -439,58 +385,64 @@
   <div class="ipod-body" id="ipodBody">
     <div class="ipod-screen theme-light" id="screen">
 
-      <!-- Main Menu View -->
-      <div class="screen-view active" id="viewMenu">
-        <div class="title-bar">
-          <span class="title-bar-text">iPod Reader</span>
-          <span class="title-bar-right" id="menuBattery">&#9654;</span>
-        </div>
-        <div class="menu-list" id="menuList"></div>
-      </div>
-
-      <!-- Now Playing View -->
-      <div class="screen-view" id="viewNowPlaying">
-        <div class="np-header">
-          <span id="npWpm">250 WPM</span>
-          <span id="npCount"></span>
-        </div>
-        <div class="np-chapter" id="npChapter"></div>
-        <div class="np-content">
-          <div class="np-word" id="npWord">iPod Reader</div>
-          <div class="np-subtitle" id="npSubtitle">Drop a PDF to begin</div>
-          <div class="eq-container" id="eqContainer"></div>
-        </div>
-        <div class="np-progress">
-          <div class="np-progress-fill" id="npProgressFill"></div>
+      <!-- Boot screen -->
+      <div class="boot-screen" id="bootScreen">
+        <div class="boot-logo" id="bootLogo">
+          <svg viewBox="0 0 48 48"><path d="M31.2 8.6c1.6-2 2.7-4.7 2.4-7.4-2.3.1-5.1 1.5-6.7 3.5-1.5 1.7-2.8 4.5-2.4 7.1 2.5.2 5.1-1.3 6.7-3.2zM33.6 12c-3.7-.2-6.9 2.1-8.7 2.1-1.8 0-4.5-2-7.4-1.9-3.8.1-7.3 2.2-9.3 5.6-4 6.9-1 17.1 2.8 22.7 1.9 2.8 4.2 5.8 7.2 5.7 2.9-.1 3.9-1.9 7.4-1.9 3.4 0 4.4 1.9 7.4 1.8 3.1-.1 5-2.8 6.9-5.6 2.2-3.2 3-6.3 3.1-6.4-.1 0-5.9-2.3-6-9.1 0-5.7 4.6-8.4 4.9-8.6-2.7-4-6.9-4.4-8.3-4.4z"/></svg>
         </div>
       </div>
 
-      <!-- Library View -->
-      <div class="screen-view" id="viewLibrary">
-        <div class="title-bar">
-          <span class="title-bar-text">Library</span>
-          <span class="title-bar-right" id="libCount"></span>
-        </div>
-        <div class="menu-list" id="libraryList"></div>
-      </div>
+      <!-- Screen viewport for slide transitions -->
+      <div class="screen-viewport" id="viewport">
 
-      <!-- Chapters View -->
-      <div class="screen-view" id="viewChapters">
-        <div class="title-bar">
-          <span class="title-bar-text">Chapters</span>
-          <span class="title-bar-right" id="chapCount"></span>
+        <div class="screen-view pos-center" id="viewMenu">
+          <div class="title-bar">
+            <span class="title-bar-text">iPod Reader</span>
+            <span class="title-bar-right">&#9654;</span>
+          </div>
+          <div class="menu-list" id="menuList"></div>
         </div>
-        <div class="menu-list" id="chaptersList"></div>
-      </div>
 
-      <!-- Settings View -->
-      <div class="screen-view" id="viewSettings">
-        <div class="title-bar">
-          <span class="title-bar-text">Settings</span>
+        <div class="screen-view pos-hidden" id="viewNowPlaying">
+          <div class="np-header">
+            <span id="npWpm">250 WPM</span>
+            <span id="npCount"></span>
+          </div>
+          <div class="np-chapter" id="npChapter"></div>
+          <div class="np-content">
+            <div class="np-word" id="npWord">iPod Reader</div>
+            <div class="np-subtitle" id="npSubtitle">Drop a PDF to begin</div>
+            <div class="eq-container" id="eqContainer"></div>
+          </div>
+          <div class="np-progress">
+            <div class="np-progress-fill" id="npProgressFill"></div>
+          </div>
         </div>
-        <div class="menu-list" id="settingsList"></div>
-      </div>
 
+        <div class="screen-view pos-hidden" id="viewLibrary">
+          <div class="title-bar">
+            <span class="title-bar-text">Library</span>
+            <span class="title-bar-right" id="libCount"></span>
+          </div>
+          <div class="menu-list" id="libraryList"></div>
+        </div>
+
+        <div class="screen-view pos-hidden" id="viewChapters">
+          <div class="title-bar">
+            <span class="title-bar-text">Chapters</span>
+            <span class="title-bar-right" id="chapCount"></span>
+          </div>
+          <div class="menu-list" id="chaptersList"></div>
+        </div>
+
+        <div class="screen-view pos-hidden" id="viewSettings">
+          <div class="title-bar">
+            <span class="title-bar-text">Settings</span>
+          </div>
+          <div class="menu-list" id="settingsList"></div>
+        </div>
+
+      </div>
     </div>
 
     <div class="click-wheel" id="clickWheel">
@@ -522,33 +474,40 @@
     let isPlaying = false;
     let intervalId = null;
     let pdfFileName = '';
-    let chapters = [];       // [{ title, wordIndex }]
-    let bookmarks = {};      // { fileName: wordIndex }
-    let library = [];        // [{ name, wordCount, date }]
+    let chapters = [];
+    let bookmarks = {};
+    let library = [];
+    let booted = false;
 
-    // Settings
     let settings = {
       theme: 'light',
       ttsEnabled: true,
       defaultWpm: 250,
-      voice: null // voice name
+      voice: null
     };
 
     // TTS
     let ttsVoice = null;
     let ttsSpeaking = false;
     let nextTTSChunkAt = 0;
+    let ttsBoundaryIndex = 0;  // word index driven by TTS boundary events
+    let ttsDriven = false;     // true when TTS boundary is actively driving display
 
-    // EQ animation
+    // EQ
     let eqAnimId = null;
 
-    // Navigation stack for MENU button
+    // Navigation
     let viewStack = ['menu'];
-    let menuSelections = {}; // track selected index per view
+    let activeViewName = 'menu';
+    let menuSelections = {};
+
+    // Audio context for click sounds
+    let audioCtx = null;
 
     // --- DOM ---
     const ipodBody = document.getElementById('ipodBody');
     const screenEl = document.getElementById('screen');
+    const viewport = document.getElementById('viewport');
     const clickWheel = document.getElementById('clickWheel');
     const btnMenu = document.getElementById('btnMenu');
     const btnForward = document.getElementById('btnForward');
@@ -556,8 +515,9 @@
     const btnBack = document.getElementById('btnBack');
     const btnCenter = document.getElementById('btnCenter');
     const pdfInput = document.getElementById('pdfInput');
+    const bootScreen = document.getElementById('bootScreen');
+    const bootLogo = document.getElementById('bootLogo');
 
-    // Now Playing DOM
     const npWpm = document.getElementById('npWpm');
     const npCount = document.getElementById('npCount');
     const npWord = document.getElementById('npWord');
@@ -570,7 +530,78 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    // --- Persistence ---
+    // =========================================================
+    //  CLICK SOUND (Web Audio API)
+    // =========================================================
+    function initAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function playClick() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.03);
+
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.04);
+    }
+
+    function playSelectSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(1100, audioCtx.currentTime + 0.04);
+
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    // Ensure audio context is initialized on first user interaction
+    function ensureAudio() {
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // =========================================================
+    //  BOOT ANIMATION
+    // =========================================================
+    function runBootSequence() {
+      // Show Apple logo
+      setTimeout(() => { bootLogo.classList.add('visible'); }, 200);
+
+      // Fade out boot screen, reveal menu
+      setTimeout(() => {
+        bootScreen.style.opacity = '0';
+        setTimeout(() => {
+          bootScreen.style.display = 'none';
+          booted = true;
+        }, 600);
+      }, 1800);
+    }
+
+    // =========================================================
+    //  PERSISTENCE
+    // =========================================================
     function loadSettings() {
       try {
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -586,9 +617,7 @@
 
     function saveSettings() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          settings, bookmarks, library
-        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, bookmarks, library }));
       } catch (e) {}
     }
 
@@ -597,7 +626,9 @@
       screenEl.classList.add(`theme-${settings.theme}`);
     }
 
-    // --- TTS ---
+    // =========================================================
+    //  TTS (with boundary-driven sync)
+    // =========================================================
     function setupTTS() {
       function pickVoice() {
         const voices = speechSynthesis.getVoices();
@@ -605,10 +636,20 @@
           const saved = voices.find(v => v.name === settings.voice);
           if (saved) { ttsVoice = saved; return; }
         }
-        ttsVoice = voices.find(v => v.name.includes('Samantha')) ||
-                   voices.find(v => v.name.includes('Karen')) ||
-                   voices.find(v => v.name.includes('Daniel')) ||
-                   voices.find(v => v.lang.startsWith('en') && v.localService) ||
+        // Prefer premium/enhanced voices (much more natural sounding)
+        // macOS has "Premium" and "Enhanced" variants that sound great
+        const preferredNames = [
+          'Ava (Premium)', 'Zoe (Premium)', 'Samantha (Enhanced)',
+          'Ava', 'Zoe', 'Samantha',
+          'Karen (Enhanced)', 'Karen',
+          'Daniel (Enhanced)', 'Daniel',
+        ];
+        for (const name of preferredNames) {
+          const match = voices.find(v => v.name === name);
+          if (match) { ttsVoice = match; return; }
+        }
+        // Fallback: any local English voice
+        ttsVoice = voices.find(v => v.lang.startsWith('en') && v.localService) ||
                    voices.find(v => v.lang.startsWith('en')) ||
                    voices[0] || null;
       }
@@ -619,25 +660,67 @@
     function speakChunk(startIdx, count) {
       if (!settings.ttsEnabled || !ttsVoice) return;
       speechSynthesis.cancel();
+
       const end = Math.min(startIdx + count, words.length);
       const phrase = words.slice(startIdx, end).join(' ');
       const utter = new SpeechSynthesisUtterance(phrase);
       utter.voice = ttsVoice;
-      utter.rate = Math.max(0.5, Math.min(4, wpm / 250));
+      // Slightly slower rate feels more natural; cap at 2.5 to avoid garbling
+      utter.rate = Math.max(0.5, Math.min(2.5, wpm / 300));
       utter.pitch = 1;
       utter.volume = 1;
       ttsSpeaking = true;
-      utter.onend = () => { ttsSpeaking = false; };
-      utter.onerror = () => { ttsSpeaking = false; };
+
+      // Track which word in the chunk we're on
+      let chunkWordIndex = 0;
+      ttsBoundaryIndex = startIdx;
+      ttsDriven = true;
+
+      utter.onboundary = (event) => {
+        if (event.name === 'word' && isPlaying) {
+          // Map character offset to word index in chunk
+          const textSoFar = phrase.substring(0, event.charIndex);
+          const wordsSoFar = textSoFar.split(/\s+/).filter(w => w.length > 0).length;
+          const globalIdx = startIdx + wordsSoFar;
+
+          if (globalIdx < words.length && globalIdx >= startIdx) {
+            displayWord(words[globalIdx]);
+            currentIndex = globalIdx + 1;
+            updateNowPlaying();
+          }
+        }
+      };
+
+      utter.onend = () => {
+        ttsSpeaking = false;
+        ttsDriven = false;
+        // If still playing and more words to go, schedule next chunk
+        if (isPlaying && currentIndex < words.length) {
+          nextTTSChunkAt = currentIndex;
+          speakChunk(currentIndex, TTS_CHUNK_SIZE);
+          nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
+        } else if (isPlaying && currentIndex >= words.length) {
+          stopReading();
+          npWord.textContent = 'Done';
+          npSubtitle.textContent = `${words.length.toLocaleString()} words`;
+          npSubtitle.style.opacity = '1';
+          saveBookmark();
+        }
+      };
+
+      utter.onerror = () => { ttsSpeaking = false; ttsDriven = false; };
       speechSynthesis.speak(utter);
     }
 
     function stopTTS() {
       speechSynthesis.cancel();
       ttsSpeaking = false;
+      ttsDriven = false;
     }
 
-    // --- EQ Visualizer ---
+    // =========================================================
+    //  EQ VISUALIZER
+    // =========================================================
     function setupEQ() {
       eqContainer.innerHTML = '';
       for (let i = 0; i < EQ_BAR_COUNT; i++) {
@@ -666,15 +749,15 @@
       eqAnimId = null;
       const bars = eqContainer.children;
       for (let i = 0; i < bars.length; i++) bars[i].style.height = '2px';
-      // Keep visible but flat when paused with content loaded
       if (words.length === 0) eqContainer.classList.remove('active');
     }
 
-    // --- PDF Extraction ---
+    // =========================================================
+    //  PDF EXTRACTION
+    // =========================================================
     async function extractTextFromPDF(arrayBuffer) {
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let fullText = '';
-
       for (let i = 1; i <= pdf.numPages; i++) {
         npSubtitle.textContent = `Loading page ${i} / ${pdf.numPages}`;
         const page = await pdf.getPage(i);
@@ -682,38 +765,30 @@
         const pageText = content.items.map(item => item.str).join(' ');
         fullText += pageText + ' ';
       }
-
       return fullText.split(/\s+/).filter(w => w.length > 0);
     }
 
-    // --- Chapter Detection ---
+    // =========================================================
+    //  CHAPTERS
+    // =========================================================
     function detectChapters(wordArray) {
       const chaps = [{ title: 'Start', wordIndex: 0 }];
-      const text = wordArray.join(' ');
-      // Look for common chapter patterns
       const patterns = [
         /\b(Chapter|CHAPTER)\s+(\d+|[IVXLC]+)\b/gi,
         /\b(Part|PART)\s+(\d+|[IVXLC]+)\b/gi,
         /\b(Section|SECTION)\s+(\d+)\b/gi,
       ];
-
-      let wordPos = 0;
       for (let i = 0; i < wordArray.length; i++) {
-        // Check if this word starts a chapter pattern
         const remaining = wordArray.slice(i, i + 4).join(' ');
         for (const pat of patterns) {
           pat.lastIndex = 0;
           const match = pat.exec(remaining);
           if (match && remaining.indexOf(match[0]) === 0) {
-            chaps.push({
-              title: match[0],
-              wordIndex: i
-            });
+            chaps.push({ title: match[0], wordIndex: i });
             break;
           }
         }
       }
-
       return chaps;
     }
 
@@ -721,9 +796,8 @@
       if (chapters.length <= 1) return null;
       let current = chapters[0];
       for (let i = 1; i < chapters.length; i++) {
-        if (chapters[i].wordIndex <= currentIndex) {
-          current = chapters[i];
-        } else break;
+        if (chapters[i].wordIndex <= currentIndex) current = chapters[i];
+        else break;
       }
       return current;
     }
@@ -737,35 +811,60 @@
       return idx;
     }
 
-    // --- Sentence-Aware Pacing ---
+    // =========================================================
+    //  SENTENCE-AWARE PACING
+    // =========================================================
     function getWordDelay(word) {
       const base = 60000 / wpm;
-      // Longer pause at sentence endings
       if (/[.!?]$/.test(word)) return base * 2.2;
-      // Medium pause at clause boundaries
       if (/[,;:]$/.test(word)) return base * 1.5;
-      // Slight pause at paragraph indicators (long dashes, ellipsis)
       if (/[—–…]$/.test(word)) return base * 1.8;
       return base;
     }
 
-    // --- RSVP Engine (sentence-aware) ---
+    // =========================================================
+    //  RSVP ENGINE
+    // =========================================================
     function startReading() {
       if (words.length === 0) return;
       isPlaying = true;
-      navigateTo('nowPlaying');
+      slideToView('nowPlaying', 'forward');
       startEQ();
 
-      // Start TTS chunk
-      nextTTSChunkAt = currentIndex;
-      speakChunk(currentIndex, TTS_CHUNK_SIZE);
-      nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
+      if (settings.ttsEnabled && ttsVoice) {
+        // TTS-driven mode: speech boundary events drive the display
+        nextTTSChunkAt = currentIndex;
+        speakChunk(currentIndex, TTS_CHUNK_SIZE);
+        nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
 
-      scheduleNextWord();
+        // Fallback timer in case onboundary doesn't fire (some browsers)
+        startFallbackTimer();
+      } else {
+        // Timer-driven mode (no TTS)
+        scheduleNextWord();
+      }
+    }
+
+    // Fallback: if TTS is on but onboundary events aren't firing,
+    // we still advance visually after a timeout
+    let fallbackTimerId = null;
+    let lastBoundaryTime = 0;
+
+    function startFallbackTimer() {
+      lastBoundaryTime = Date.now();
+      clearInterval(fallbackTimerId);
+      fallbackTimerId = setInterval(() => {
+        if (!isPlaying) { clearInterval(fallbackTimerId); return; }
+        // If no boundary event for 2 seconds, fall back to timer-driven
+        if (Date.now() - lastBoundaryTime > 2000 && ttsDriven) {
+          ttsDriven = false;
+          scheduleNextWord();
+        }
+      }, 500);
     }
 
     function scheduleNextWord() {
-      if (!isPlaying) return;
+      if (!isPlaying || ttsDriven) return;
       if (currentIndex >= words.length) {
         stopReading();
         npWord.textContent = 'Done';
@@ -775,7 +874,7 @@
         return;
       }
 
-      // TTS chunk boundary
+      // TTS chunk boundary (non-sync mode)
       if (settings.ttsEnabled && currentIndex >= nextTTSChunkAt) {
         speakChunk(currentIndex, TTS_CHUNK_SIZE);
         nextTTSChunkAt = currentIndex + TTS_CHUNK_SIZE;
@@ -785,13 +884,13 @@
       const delay = getWordDelay(words[currentIndex]);
       currentIndex++;
       updateNowPlaying();
-
       intervalId = setTimeout(scheduleNextWord, delay);
     }
 
     function stopReading() {
       isPlaying = false;
       clearTimeout(intervalId);
+      clearInterval(fallbackTimerId);
       intervalId = null;
       stopTTS();
       stopEQ();
@@ -805,11 +904,7 @@
     function togglePlayPause() {
       if (words.length === 0) return;
       if (currentIndex >= words.length && !isPlaying) currentIndex = 0;
-      if (isPlaying) {
-        stopReading();
-      } else {
-        startReading();
-      }
+      if (isPlaying) stopReading(); else startReading();
     }
 
     function skipForward() {
@@ -849,6 +944,8 @@
       npWord.classList.remove('long', 'xlong');
       if (word.length > 14) npWord.classList.add('xlong');
       else if (word.length > 9) npWord.classList.add('long');
+      // Update last boundary time for fallback check
+      lastBoundaryTime = Date.now();
     }
 
     function updateNowPlaying() {
@@ -856,12 +953,13 @@
       npProgressFill.style.width = `${pct}%`;
       npCount.textContent = `${currentIndex.toLocaleString()} / ${words.length.toLocaleString()}`;
       npWpm.textContent = `${wpm} WPM`;
-
       const chap = getCurrentChapter();
       npChapter.textContent = chap && chapters.length > 1 ? chap.title : '';
     }
 
-    // --- Bookmarks ---
+    // =========================================================
+    //  BOOKMARKS & LIBRARY
+    // =========================================================
     function saveBookmark() {
       if (pdfFileName && words.length > 0 && currentIndex > 0) {
         bookmarks[pdfFileName] = currentIndex;
@@ -875,47 +973,33 @@
       }
     }
 
-    // --- Library ---
     function addToLibrary(name, wordCount) {
-      // Update or add
       const existing = library.find(l => l.name === name);
-      if (existing) {
-        existing.wordCount = wordCount;
-        existing.date = Date.now();
-      } else {
-        library.push({ name, wordCount, date: Date.now() });
-      }
-      // Keep most recent 20
+      if (existing) { existing.wordCount = wordCount; existing.date = Date.now(); }
+      else library.push({ name, wordCount, date: Date.now() });
       library.sort((a, b) => b.date - a.date);
       if (library.length > 20) library.length = 20;
       saveSettings();
     }
 
-    // --- PDF Loading ---
+    // =========================================================
+    //  PDF LOADING
+    // =========================================================
     function setupDragAndDrop() {
       ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
-        document.body.addEventListener(evt, e => {
-          e.preventDefault();
-          e.stopPropagation();
-        });
+        document.body.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
       });
-
       ipodBody.addEventListener('dragenter', () => ipodBody.classList.add('drag-over'));
-      ipodBody.addEventListener('dragover', e => {
-        e.preventDefault();
-        ipodBody.classList.add('drag-over');
-      });
+      ipodBody.addEventListener('dragover', e => { e.preventDefault(); ipodBody.classList.add('drag-over'); });
       ipodBody.addEventListener('dragleave', e => {
         if (!ipodBody.contains(e.relatedTarget)) ipodBody.classList.remove('drag-over');
       });
-
       ipodBody.addEventListener('drop', async e => {
         e.preventDefault();
         ipodBody.classList.remove('drag-over');
         const file = e.dataTransfer.files[0];
         if (file) await loadPDF(file);
       });
-
       pdfInput.addEventListener('change', async () => {
         const file = pdfInput.files[0];
         if (file) await loadPDF(file);
@@ -927,14 +1011,12 @@
       if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
         npWord.textContent = 'Not a PDF';
         npSubtitle.textContent = 'Drop a PDF file';
-        navigateTo('nowPlaying');
+        slideToView('nowPlaying', 'forward');
         return;
       }
-
       if (isPlaying) stopReading();
-
       pdfFileName = file.name.replace(/\.pdf$/i, '');
-      navigateTo('nowPlaying');
+      slideToView('nowPlaying', 'forward');
       npWord.textContent = 'Loading...';
       npSubtitle.textContent = file.name;
       npSubtitle.style.opacity = '1';
@@ -943,17 +1025,10 @@
         const arrayBuffer = await file.arrayBuffer();
         words = await extractTextFromPDF(arrayBuffer);
         currentIndex = 0;
-
-        if (words.length === 0) {
-          npWord.textContent = 'No text';
-          npSubtitle.textContent = 'PDF appears empty';
-          return;
-        }
-
+        if (words.length === 0) { npWord.textContent = 'No text'; npSubtitle.textContent = 'PDF appears empty'; return; }
         chapters = detectChapters(words);
         addToLibrary(pdfFileName, words.length);
         loadBookmark();
-
         npWord.textContent = truncate(pdfFileName, 16);
         npSubtitle.textContent = `${words.length.toLocaleString()} words`;
         npSubtitle.style.opacity = '1';
@@ -971,19 +1046,45 @@
     }
 
     // =========================================================
-    //  VIEW / NAVIGATION SYSTEM
+    //  VIEW / NAVIGATION with SLIDE TRANSITIONS
     // =========================================================
-    function navigateTo(viewName) {
-      // Hide all views
-      document.querySelectorAll('.screen-view').forEach(v => v.classList.remove('active'));
-      // Show target
-      const target = document.getElementById('view' + viewName.charAt(0).toUpperCase() + viewName.slice(1));
-      if (target) target.classList.add('active');
+    const viewNames = ['menu', 'nowPlaying', 'library', 'chapters', 'settings'];
 
-      // Push to stack (avoid duplicates at top)
-      if (viewStack[viewStack.length - 1] !== viewName) {
-        viewStack.push(viewName);
+    function getViewEl(name) {
+      return document.getElementById('view' + name.charAt(0).toUpperCase() + name.slice(1));
+    }
+
+    function slideToView(viewName, direction) {
+      if (activeViewName === viewName) return;
+
+      const oldEl = getViewEl(activeViewName);
+      const newEl = getViewEl(viewName);
+      if (!oldEl || !newEl) return;
+
+      // Position new view offscreen on correct side (instant, no transition)
+      newEl.classList.add('no-transition');
+      if (direction === 'forward') {
+        newEl.classList.remove('pos-center', 'pos-left', 'pos-hidden');
+        newEl.classList.add('pos-right');
+      } else {
+        newEl.classList.remove('pos-center', 'pos-right', 'pos-hidden');
+        newEl.classList.add('pos-left');
       }
+
+      // Force reflow
+      newEl.offsetHeight;
+
+      // Remove no-transition and animate both
+      newEl.classList.remove('no-transition');
+
+      // Slide old out, new in
+      oldEl.classList.remove('pos-center');
+      oldEl.classList.add(direction === 'forward' ? 'pos-left' : 'pos-right');
+
+      newEl.classList.remove('pos-left', 'pos-right', 'pos-hidden');
+      newEl.classList.add('pos-center');
+
+      activeViewName = viewName;
 
       // Rebuild view content
       if (viewName === 'menu') buildMainMenu();
@@ -992,26 +1093,29 @@
       if (viewName === 'settings') buildSettingsView();
     }
 
+    function navigateTo(viewName) {
+      if (viewStack[viewStack.length - 1] !== viewName) {
+        viewStack.push(viewName);
+      }
+      slideToView(viewName, 'forward');
+    }
+
     function goBack() {
+      playClick();
       if (viewStack.length > 1) {
         viewStack.pop();
         const prev = viewStack[viewStack.length - 1];
-        // Navigate without pushing again
-        document.querySelectorAll('.screen-view').forEach(v => v.classList.remove('active'));
-        const target = document.getElementById('view' + prev.charAt(0).toUpperCase() + prev.slice(1));
-        if (target) target.classList.add('active');
-        if (prev === 'menu') buildMainMenu();
-        if (prev === 'library') buildLibraryView();
-        if (prev === 'chapters') buildChaptersView();
-        if (prev === 'settings') buildSettingsView();
+        slideToView(prev, 'back');
       }
     }
 
     function currentView() {
-      return viewStack[viewStack.length - 1];
+      return activeViewName;
     }
 
-    // --- Main Menu ---
+    // =========================================================
+    //  MENU BUILDERS
+    // =========================================================
     function buildMainMenu() {
       const list = document.getElementById('menuList');
       const items = [
@@ -1021,10 +1125,8 @@
         { icon: '&#9881;', label: 'Settings', action: 'settings', hasArrow: true },
         { icon: '&#43;', label: 'Add PDF...', action: 'addPdf', hasArrow: false },
       ];
-
       list.innerHTML = '';
       const sel = menuSelections['menu'] || 0;
-
       items.forEach((item, i) => {
         const el = document.createElement('div');
         el.className = 'menu-item' + (i === sel ? ' selected' : '');
@@ -1035,21 +1137,13 @@
       });
     }
 
-    // --- Library View ---
     function buildLibraryView() {
       const list = document.getElementById('libraryList');
       const countEl = document.getElementById('libCount');
       list.innerHTML = '';
-
-      if (library.length === 0) {
-        list.innerHTML = '<div class="library-empty">No PDFs yet</div>';
-        countEl.textContent = '';
-        return;
-      }
-
+      if (library.length === 0) { list.innerHTML = '<div class="library-empty">No PDFs yet</div>'; countEl.textContent = ''; return; }
       countEl.textContent = `${library.length} items`;
       const sel = menuSelections['library'] || 0;
-
       library.forEach((item, i) => {
         const el = document.createElement('div');
         el.className = 'menu-item' + (i === sel ? ' selected' : '');
@@ -1061,22 +1155,14 @@
       });
     }
 
-    // --- Chapters View ---
     function buildChaptersView() {
       const list = document.getElementById('chaptersList');
       const countEl = document.getElementById('chapCount');
       list.innerHTML = '';
-
-      if (chapters.length <= 1) {
-        list.innerHTML = '<div class="library-empty">No chapters found</div>';
-        countEl.textContent = '';
-        return;
-      }
-
+      if (chapters.length <= 1) { list.innerHTML = '<div class="library-empty">No chapters found</div>'; countEl.textContent = ''; return; }
       countEl.textContent = `${chapters.length} chapters`;
       const sel = menuSelections['chapters'] || 0;
       const curChapIdx = getCurrentChapterIndex();
-
       chapters.forEach((chap, i) => {
         const el = document.createElement('div');
         el.className = 'chapter-item' + (i === sel ? ' selected' : '');
@@ -1087,20 +1173,18 @@
       });
     }
 
-    // --- Settings View ---
     function buildSettingsView() {
       const list = document.getElementById('settingsList');
       list.innerHTML = '';
-
+      const voiceName = ttsVoice ? ttsVoice.name.replace(/ \(.*\)/, '') : 'None';
       const items = [
         { label: 'Theme', value: settings.theme === 'light' ? 'Classic' : 'Backlit', key: 'theme' },
         { label: 'Voice', value: settings.ttsEnabled ? 'On' : 'Off', key: 'tts' },
+        { label: 'Speaker', value: truncate(voiceName, 10), key: 'speaker' },
         { label: 'Default WPM', value: `${settings.defaultWpm}`, key: 'defaultWpm' },
         { label: 'Clear Library', value: '', key: 'clearLibrary' },
       ];
-
       const sel = menuSelections['settings'] || 0;
-
       items.forEach((item, i) => {
         const el = document.createElement('div');
         el.className = 'settings-item' + (i === sel ? ' selected' : '');
@@ -1111,7 +1195,9 @@
       });
     }
 
-    // --- Get selectable item count for current view ---
+    // =========================================================
+    //  MENU NAVIGATION
+    // =========================================================
     function getItemCount(view) {
       switch (view) {
         case 'menu': return document.querySelectorAll('#menuList .menu-item').length;
@@ -1123,10 +1209,11 @@
     }
 
     function scrollSelection(delta) {
+      ensureAudio();
       const view = currentView();
       if (view === 'nowPlaying') {
-        // In now playing, wheel adjusts speed
         adjustSpeed(delta > 0 ? WPM_STEP : -WPM_STEP);
+        playClick();
         return;
       }
 
@@ -1134,51 +1221,42 @@
       if (count === 0) return;
 
       let sel = menuSelections[view] || 0;
-      sel += delta;
-      if (sel < 0) sel = 0;
-      if (sel >= count) sel = count - 1;
+      const newSel = sel + delta;
+      if (newSel < 0 || newSel >= count) return; // don't wrap, don't click
+      sel = newSel;
       menuSelections[view] = sel;
 
-      // Rebuild view to update highlight
+      playClick();
+
       if (view === 'menu') buildMainMenu();
       if (view === 'library') buildLibraryView();
       if (view === 'chapters') buildChaptersView();
       if (view === 'settings') buildSettingsView();
     }
 
-    // --- Select action (center button) ---
     function selectAction() {
+      ensureAudio();
+      playSelectSound();
       const view = currentView();
 
-      if (view === 'nowPlaying') {
-        togglePlayPause();
-        return;
-      }
+      if (view === 'nowPlaying') { togglePlayPause(); return; }
 
       if (view === 'menu') {
         const sel = menuSelections['menu'] || 0;
         const items = document.querySelectorAll('#menuList .menu-item');
         if (!items[sel]) return;
         const action = items[sel].dataset.action;
-        if (action === 'addPdf') {
-          pdfInput.click();
-        } else {
-          navigateTo(action);
-        }
+        if (action === 'addPdf') pdfInput.click();
+        else navigateTo(action);
         return;
       }
 
       if (view === 'library') {
         const sel = menuSelections['library'] || 0;
         if (sel < library.length) {
-          // Can't reload from storage — just show info & navigate to now playing
-          // If it's the currently loaded file, go to now playing
           const item = library[sel];
-          if (item.name === pdfFileName && words.length > 0) {
-            navigateTo('nowPlaying');
-          }
-          // Otherwise just go to now playing (they'll need to re-drop)
-          navigateTo('nowPlaying');
+          if (item.name === pdfFileName && words.length > 0) navigateTo('nowPlaying');
+          else navigateTo('nowPlaying');
         }
         return;
       }
@@ -1200,26 +1278,29 @@
 
         if (key === 'theme') {
           settings.theme = settings.theme === 'light' ? 'dark' : 'light';
-          applyTheme();
-          saveSettings();
-          buildSettingsView();
+          applyTheme(); saveSettings(); buildSettingsView();
         } else if (key === 'tts') {
           settings.ttsEnabled = !settings.ttsEnabled;
           if (!settings.ttsEnabled) stopTTS();
-          saveSettings();
-          buildSettingsView();
+          saveSettings(); buildSettingsView();
+        } else if (key === 'speaker') {
+          // Cycle through available English voices
+          const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+          if (voices.length > 0) {
+            const curIdx = ttsVoice ? voices.findIndex(v => v.name === ttsVoice.name) : -1;
+            const nextIdx = (curIdx + 1) % voices.length;
+            ttsVoice = voices[nextIdx];
+            settings.voice = ttsVoice.name;
+            saveSettings(); buildSettingsView();
+          }
         } else if (key === 'defaultWpm') {
           settings.defaultWpm += 50;
           if (settings.defaultWpm > MAX_WPM) settings.defaultWpm = MIN_WPM;
           wpm = settings.defaultWpm;
-          saveSettings();
-          buildSettingsView();
+          saveSettings(); buildSettingsView();
         } else if (key === 'clearLibrary') {
-          library = [];
-          bookmarks = {};
-          saveSettings();
-          buildLibraryView();
-          buildSettingsView();
+          library = []; bookmarks = {};
+          saveSettings(); buildLibraryView(); buildSettingsView();
         }
         return;
       }
@@ -1229,78 +1310,49 @@
     //  CLICK WHEEL CONTROLS
     // =========================================================
     function setupClickWheel() {
-      btnCenter.addEventListener('click', e => {
-        e.stopPropagation();
-        selectAction();
-      });
+      btnCenter.addEventListener('click', e => { e.stopPropagation(); selectAction(); });
 
       btnPlayPause.addEventListener('click', e => {
         e.stopPropagation();
-        if (currentView() === 'nowPlaying') {
-          togglePlayPause();
-        } else {
-          // Navigate to now playing and toggle
-          navigateTo('nowPlaying');
-          if (words.length > 0) togglePlayPause();
-        }
+        ensureAudio();
+        playSelectSound();
+        if (currentView() === 'nowPlaying') togglePlayPause();
+        else { navigateTo('nowPlaying'); if (words.length > 0) togglePlayPause(); }
       });
 
-      btnMenu.addEventListener('click', e => {
-        e.stopPropagation();
-        goBack();
-      });
+      btnMenu.addEventListener('click', e => { e.stopPropagation(); goBack(); });
 
-      // Forward/back context-dependent
       btnForward.addEventListener('click', e => {
         e.stopPropagation();
-        if (currentView() === 'nowPlaying') {
-          skipForward();
-        } else {
-          scrollSelection(1);
-        }
+        ensureAudio();
+        playClick();
+        if (currentView() === 'nowPlaying') skipForward();
+        else scrollSelection(1);
       });
 
       btnBack.addEventListener('click', e => {
         e.stopPropagation();
-        if (currentView() === 'nowPlaying') {
-          skipBack();
-        } else {
-          scrollSelection(-1);
-        }
+        ensureAudio();
+        playClick();
+        if (currentView() === 'nowPlaying') skipBack();
+        else scrollSelection(-1);
       });
 
       // Hold-to-repeat
       let holdInterval = null;
-      function startHold(action) {
-        action();
-        holdInterval = setInterval(action, 120);
-      }
-      function stopHold() {
-        if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
-      }
+      function startHold(action) { action(); holdInterval = setInterval(action, 120); }
+      function stopHold() { if (holdInterval) { clearInterval(holdInterval); holdInterval = null; } }
 
-      btnForward.addEventListener('mousedown', e => {
-        e.stopPropagation();
-        if (currentView() === 'nowPlaying') startHold(skipForward);
-      });
-      btnBack.addEventListener('mousedown', e => {
-        e.stopPropagation();
-        if (currentView() === 'nowPlaying') startHold(skipBack);
-      });
+      btnForward.addEventListener('mousedown', e => { e.stopPropagation(); if (currentView() === 'nowPlaying') startHold(() => { playClick(); skipForward(); }); });
+      btnBack.addEventListener('mousedown', e => { e.stopPropagation(); if (currentView() === 'nowPlaying') startHold(() => { playClick(); skipBack(); }); });
       document.addEventListener('mouseup', stopHold);
 
-      btnForward.addEventListener('touchstart', e => {
-        e.preventDefault(); e.stopPropagation();
-        if (currentView() === 'nowPlaying') startHold(skipForward);
-      });
-      btnBack.addEventListener('touchstart', e => {
-        e.preventDefault(); e.stopPropagation();
-        if (currentView() === 'nowPlaying') startHold(skipBack);
-      });
+      btnForward.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); if (currentView() === 'nowPlaying') startHold(() => { playClick(); skipForward(); }); });
+      btnBack.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); if (currentView() === 'nowPlaying') startHold(() => { playClick(); skipBack(); }); });
       document.addEventListener('touchend', stopHold);
     }
 
-    // --- Wheel Rotation Gesture ---
+    // --- Wheel Rotation ---
     function setupWheelGesture() {
       let isDragging = false;
       let lastAngle = null;
@@ -1317,8 +1369,7 @@
 
       function isOnRing(e) {
         const rect = clickWheel.getBoundingClientRect();
-        const cx = rect.width / 2;
-        const cy = rect.height / 2;
+        const cx = rect.width / 2, cy = rect.height / 2;
         const clientX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
         const clientY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
         const dist = Math.hypot(clientX - cx, clientY - cy);
@@ -1327,16 +1378,14 @@
 
       clickWheel.addEventListener('mousedown', e => {
         if (e.target === clickWheel && isOnRing(e)) {
-          isDragging = true;
-          lastAngle = getAngle(e);
-          accumulated = 0;
+          ensureAudio();
+          isDragging = true; lastAngle = getAngle(e); accumulated = 0;
         }
       });
       clickWheel.addEventListener('touchstart', e => {
         if (e.target === clickWheel && isOnRing(e)) {
-          isDragging = true;
-          lastAngle = getAngle(e);
-          accumulated = 0;
+          ensureAudio();
+          isDragging = true; lastAngle = getAngle(e); accumulated = 0;
         }
       });
 
@@ -1356,9 +1405,9 @@
         if (Math.abs(accumulated) >= threshold) {
           const steps = Math.floor(Math.abs(accumulated) / threshold);
           const dir = accumulated > 0 ? 1 : -1;
-
           if (currentView() === 'nowPlaying') {
             adjustSpeed(dir * WPM_STEP * steps);
+            playClick();
           } else {
             for (let i = 0; i < steps; i++) scrollSelection(dir);
           }
@@ -1373,30 +1422,33 @@
     // --- Keyboard ---
     function setupKeyboard() {
       document.addEventListener('keydown', e => {
+        ensureAudio();
         switch (e.code) {
           case 'Space':
             e.preventDefault();
-            if (currentView() === 'nowPlaying') togglePlayPause();
+            if (currentView() === 'nowPlaying') { playSelectSound(); togglePlayPause(); }
             else selectAction();
             break;
           case 'ArrowRight':
             e.preventDefault();
+            playClick();
             if (currentView() === 'nowPlaying') skipForward();
             else scrollSelection(1);
             break;
           case 'ArrowLeft':
             e.preventDefault();
+            playClick();
             if (currentView() === 'nowPlaying') skipBack();
             else scrollSelection(-1);
             break;
           case 'ArrowUp':
             e.preventDefault();
-            if (currentView() === 'nowPlaying') adjustSpeed(WPM_STEP);
+            if (currentView() === 'nowPlaying') { playClick(); adjustSpeed(WPM_STEP); }
             else scrollSelection(-1);
             break;
           case 'ArrowDown':
             e.preventDefault();
-            if (currentView() === 'nowPlaying') adjustSpeed(-WPM_STEP);
+            if (currentView() === 'nowPlaying') { playClick(); adjustSpeed(-WPM_STEP); }
             else scrollSelection(1);
             break;
           case 'Enter':
@@ -1412,7 +1464,9 @@
       });
     }
 
-    // --- Init ---
+    // =========================================================
+    //  INIT
+    // =========================================================
     loadSettings();
     setupTTS();
     setupEQ();
@@ -1420,7 +1474,8 @@
     setupClickWheel();
     setupWheelGesture();
     setupKeyboard();
-    navigateTo('menu');
+    buildMainMenu();
+    runBootSequence();
   </script>
 </body>
 </html>
